@@ -1,0 +1,2 @@
+#!/bin/bash
+/Developer/Marmalade/6.4/s3e/bin/mkb --deploy=bb10 --deployargs=--config=dist
