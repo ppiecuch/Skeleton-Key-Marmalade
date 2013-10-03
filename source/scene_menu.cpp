@@ -106,7 +106,7 @@ void MenuButtonOtherGames::buttonPressed() {
 }
 void MenuButtonOtherGames::buttonReleased() {
 	if(s3eExtOSExecAvailable() == S3E_TRUE)
-		s3eOSExecExecute("http://othergames.insurgentgames.com/skeleton-key/", false);
+		s3eOSExecExecute("http://komsoft.ath.cx/index_narrow.html", false);
 }
 
 // scene menu

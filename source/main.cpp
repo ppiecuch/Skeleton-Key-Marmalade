@@ -60,7 +60,7 @@ void gameInit() {
 		IGLog("Attached derbh archive sound.dz");
 	
 	// iphone, bada only need gles1
-	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_BADA || AIRPLAY_DEVICE == AIRPLAY_DEVICE_IPHONE) {
+	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_BADA || AIRPLAY_DEVICE == AIRPLAY_DEVICE_IPHONE || AIRPLAY_DEVICE == AIRPLAY_DEVICE_BB10) {
 		if(dzArchiveAttach("gles1.dz") == S3E_RESULT_ERROR)
 			IGLog("Error attaching derbh archive gles1.dz");
 	}
@@ -99,10 +99,13 @@ void gameInit() {
 
 void gameStart() {
 	// if this is the 7th time opening the game, pop up the nag screen
+#if 0
 	if(Settings::getInstance()->loadCount == 7) {
 		// go to the nag scene
 		IGDirector::getInstance()->switchScene(new SceneNag());
-	} else {
+	} else
+#endif
+    {
 		// if there's a game in progress, go to game menu
 		if(GameData::getInstance()->loadGame()) {
 			IGDirector::getInstance()->switchScene(new SceneGameMenu());
@@ -154,7 +157,7 @@ int main(int argc, char* argv[]) {
 	gameInit();
 
 	// uncomment to just generate textures and not load the game
-	//gameJustGenerateTextures(); return 0;
+	// gameJustGenerateTextures(); return 0;
 
 	gameStart();
 	

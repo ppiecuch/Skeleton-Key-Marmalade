@@ -1,6 +1,13 @@
 # for android, keep including gles1-atitc.dz
 # for iphone and bada, comment that line out
 
+includepath source/sqlite3
+
+options
+{
+	app-icf='data/app.icf'
+}
+
 files
 {
 	(source)
@@ -58,6 +65,11 @@ files
 	ig_sprite.cpp
 	ig_touches.h
 	ig_touches.cpp
+	(source/sqlite3)
+    	[SQLite3]
+    	sqlite3.h
+    	sqlite3ext.h
+    	sqlite3.c
 }
 
 assets
@@ -70,11 +82,22 @@ assets
 	achievements.db
 	# airplay splash image
 	splash.jpg
+	splash_bb10.jpg
 	# music
 	menu.mp3
 	gameplay1.mp3
 	gameplay2.mp3
 	gameplay3.mp3
+	# resources
+	achievements.group
+	game_menu.group
+	map.group
+	nag.group
+	select_level.group
+	game.group
+	instructions.group
+	menu.group
+	options.group
 	
 	("archive")
 	sound.dz
@@ -86,12 +109,30 @@ subprojects
 {
 	iw2d
 	derbh
-	third_party/sqlite3
+	s3eIOSBackgroundMusic
 }
 
 deployments
 {
+	icon='$HOME/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/other_files/s3e/icons'
+	splashscreen='$HOME/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/other_files/s3e/splash'
+	name='SkeletonKey'
+	caption='SkeletonKey'
+	copyright='(c) 2012,2013 KomSoft Oprogramowanie'
+	provider='KomSoft'
+	##
+	blackberry-author='KomSoft Oprogramowanie'
+	blackberry-authorid='gYAAgJWWmDfer27CLcxm_P3mzK0'
+	blackberry-permissions-access-shared=1
+	##
+
+	version-major=1
+	version-minor=0
+	version-revision=1
+	version-string='1.0.1'
+
 	["iphone"]
+	iphone
 	iphone-appid='com.insurgentgames.skeletonkey'
 	iphone-icon=other_files/ios/icon.png
 	iphone-splash=other_files/ios/Default.png
@@ -104,13 +145,20 @@ deployments
 	iphone-prerendered-icon='1'
 	
 	["android"]
+	android
 	android-icon=other_files/android/icon.png
 	android-manifest=other_files/android/AndroidManifest.xml
 	android-pkgname='com.insurgentgames.skeletonkey'
 	version-string='1.0'
 	
 	["bada"]
+	bada
 	bada-icon=other_files/bada/Application.png
 	bada-splash=other_files/bada/Splash.png
 	version-string='1.0.0'
+
+	["dist"]
+	blackberry-cskpass='awec12'
+	blackberry-keystore='$HOME/Library/Research In Motion/author.p12'
+	blackberry-storepass='awec12'
 }

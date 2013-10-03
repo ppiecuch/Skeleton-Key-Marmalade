@@ -3,8 +3,8 @@
 #include "sounds.h"
 #include "settings.h"
 #include "game_data.h"
-#include <s3eExtensions/s3eExt_BackgroundMusic.h>
-#include <s3eExtensions/s3eExt_BackgroundAudio.h>
+#include <s3eIOSBackgroundMusic.h>
+#include <s3eIOSBackgroundAudio.h>
 
 Sounds* Sounds::instance = NULL;
 
@@ -27,11 +27,11 @@ Sounds::Sounds() {
 	
 	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_IPHONE) {
 		// for iphone, if there's background music playing, keep it playing
-		if(s3eExtBackgroundMusicAvailable() == S3E_TRUE) {
-			if(s3eBackgroundMusicGetInt(S3E_BACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_BACKGROUNDMUSIC_PLAYBACK_INTERRUPTED)
-				s3eBackgroundMusicPlay();
-			if(s3eExtBackgroundAudioIsPlaying() == S3E_TRUE)
-				s3eExtBackgroundAudioSetMix(S3E_TRUE);
+		if(s3eIOSBackgroundMusicAvailable() == S3E_TRUE) {
+			if(s3eIOSBackgroundMusicGetInt(S3E_IOSBACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_IOSBACKGROUNDMUSIC_PLAYBACK_INTERRUPTED)
+				s3eIOSBackgroundMusicPlay();
+			if(s3eIOSBackgroundAudioIsPlaying() == S3E_TRUE)
+				s3eIOSBackgroundAudioSetMix(S3E_TRUE);
 		}
 	}
 
@@ -152,8 +152,8 @@ void Sounds::startMusicMenu() {
 	if(Settings::getInstance()->musicEnabled == false)
 		return;
 	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_IPHONE) {
-		if(s3eExtBackgroundMusicAvailable() == S3E_TRUE)
-			if(s3eBackgroundMusicGetInt(S3E_BACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_BACKGROUNDMUSIC_PLAYBACK_PLAYING)
+		if(s3eIOSBackgroundMusicAvailable() == S3E_TRUE)
+			if(s3eIOSBackgroundMusicGetInt(S3E_IOSBACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_IOSBACKGROUNDMUSIC_PLAYBACK_PLAYING)
 				return;
 	}
 	
@@ -168,8 +168,8 @@ void Sounds::startMusicMenu() {
 void Sounds::startMusicGameplay() {
 	if(Settings::getInstance()->musicEnabled == false)
 		return;
-	if(s3eExtBackgroundMusicAvailable() == S3E_TRUE)
-		if(s3eBackgroundMusicGetInt(S3E_BACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_BACKGROUNDMUSIC_PLAYBACK_PLAYING)
+	if(s3eIOSBackgroundMusicAvailable() == S3E_TRUE)
+		if(s3eIOSBackgroundMusicGetInt(S3E_IOSBACKGROUNDMUSIC_PLAYBACK_STATE) == S3E_IOSBACKGROUNDMUSIC_PLAYBACK_PLAYING)
 			return;
 
 	IGLog("Sounds starting gameplay music");
