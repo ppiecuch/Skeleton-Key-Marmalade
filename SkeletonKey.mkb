@@ -2,6 +2,7 @@
 # for iphone and bada, comment that line out
 
 includepath source/sqlite3
+define IW_USE_LEGACY_MODULES
 
 options
 {
