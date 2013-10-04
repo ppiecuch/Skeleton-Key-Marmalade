@@ -13,7 +13,7 @@ copy ..\data-ram\data-gles1\*.bin gles1\
 del gles1.dz
 %dzip% gles1.dcl
 
-atitc:
+:atitc
 if not exist ..\data-ram\data-gles1-atitc goto end
 echo "Compressing ATITC textures"
 del /q gles1-atitc\*.*
@@ -21,4 +21,4 @@ copy ..\data-ram\data-gles1-atitc\*.bin gles1-atitc\
 del gles1-atitc.dz
 %dzip% gles1-atitc.dcl
 
-end:
+:end
