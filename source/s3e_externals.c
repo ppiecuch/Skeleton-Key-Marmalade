@@ -110,11 +110,8 @@ void s3eSocketGetLocalName() {}
 void s3eSocketGetPeerName() {}
 void s3eSocketConnect() {}
 void s3eSocketSend() {}
-void s3eInetAddress() {}
 void s3eSocketRecv() {}
-void s3eInetAddress() {}
 void s3eSocketRecvFrom() {}
-void s3eInetAddress() {}
 void s3eSocketSendTo() {}
 void s3eInetAddress() {}
 void s3eSocketListen() {}
