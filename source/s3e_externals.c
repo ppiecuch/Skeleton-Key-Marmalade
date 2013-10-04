@@ -37,6 +37,7 @@ void s3eFileGetSize() {}
 void s3eMallocBase() {}
 void __s3eMallocBase() {}
 void s3eFreeBase() {}
+void __s3eFreeBase() {}
 void s3eSoundSetInt() {}
 void s3eSoundGetErrorString() {}
 void s3eSoundGetFreeChannel() {}
@@ -69,6 +70,7 @@ void s3ePointerGetX() {}
 void s3ePointerGetY() {}
 void s3eSurfaceShow() {}
 void s3eFileGetChar() {}
+void s3eReallocBase() {}
 void __s3eReallocBase() {}
 void s3eGLRegister() {}
 void s3eGLUnRegister() {}
