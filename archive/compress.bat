@@ -1,4 +1,5 @@
 dzip=c:\Developer\Marmalade\6.4\tools\dzip\dzip
+@echo off
 
 echo "Compressing sound"
 del /q sound\*.*
