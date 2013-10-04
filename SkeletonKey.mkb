@@ -42,6 +42,7 @@ files
 	game_data.cpp
 	achievements.h
 	achievements.cpp
+	s3e_externals.c
 	(source/ig2d)
 	ig.h
 	ig_animation.h
