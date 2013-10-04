@@ -1,4 +1,4 @@
-dzip='/Developer/Marmalade/6.2/tools/dzip/dzip'
+dzip='/Developer/Marmalade/6.4/tools/dzip/dzip'
 
 echo "Compressing sound"
 rm -rf sound && mkdir sound
