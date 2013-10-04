@@ -137,7 +137,7 @@ void s3eCompressionDecomp() {}
 
 // --
 
-void __glGetString() {}
+void _glGetString() {}
 void __glGetIntegerv() {}
 void __glGetError() {}
 void __glClearColor() {}
