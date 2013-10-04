@@ -35,7 +35,7 @@ void s3eFileClose() {}
 void s3eFileRead() {}
 void s3eFileGetSize() {}
 void __s3eMallocBase() {}
-void __s3eFreeBase() {}
+void s3eFreeBase() {}
 void s3eSoundSetInt() {}
 void s3eSoundGetErrorString() {}
 void s3eSoundGetFreeChannel() {}
@@ -68,7 +68,7 @@ void s3ePointerGetX() {}
 void s3ePointerGetY() {}
 void s3eSurfaceShow() {}
 void s3eFileGetChar() {}
-void s3eReallocBase() {}
+void __s3eReallocBase() {}
 void s3eGLRegister() {}
 void s3eGLUnRegister() {}
 void s3eGLGetNativeWindow() {}
@@ -137,7 +137,7 @@ void s3eCompressionDecomp() {}
 
 // --
 
-void _glGetString() {}
+void glGetString() {}
 void __glGetIntegerv() {}
 void __glGetError() {}
 void __glClearColor() {}
