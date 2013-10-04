@@ -113,7 +113,6 @@ void s3eSocketSend() {}
 void s3eSocketRecv() {}
 void s3eSocketRecvFrom() {}
 void s3eSocketSendTo() {}
-void s3eInetAddress() {}
 void s3eSocketListen() {}
 void s3eSocketAccept() {}
 void s3eSocketReadable() {}
