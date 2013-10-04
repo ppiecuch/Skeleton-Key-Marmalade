@@ -116,8 +116,8 @@ subprojects
 
 deployments
 {
-	icon='$HOME/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/other_files/s3e/icons'
-	splashscreen='$HOME/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/other_files/s3e/splash'
+	icon=other_files/s3e/icons
+	splashscreen=other_files/s3e/splash
 	name='SkeletonKey'
 	caption='SkeletonKey'
 	copyright='(c) 2012,2013 KomSoft Oprogramowanie'
