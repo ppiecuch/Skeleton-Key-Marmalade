@@ -68,7 +68,7 @@ void s3ePointerGetX() {}
 void s3ePointerGetY() {}
 void s3eSurfaceShow() {}
 void s3eFileGetChar() {}
-void __s3eReallocBase() {}
+void s3eReallocBase() {}
 void s3eGLRegister() {}
 void s3eGLUnRegister() {}
 void s3eGLGetNativeWindow() {}
@@ -384,9 +384,9 @@ void eglGetCurrentSurface() {}
 void eglGetCurrentDisplay() {}
 void eglQueryContext() {}
 void eglSwapBuffers() {}
-void eglGetProcAddress() {}
+void __eglGetProcAddress() {}
 void eglGetConfigs() {}
 void eglQuerySurface() {}
-void _eglBindTexImage() {}
+void __eglBindTexImage() {}
 
 #endif
