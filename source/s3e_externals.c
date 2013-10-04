@@ -1,7 +1,10 @@
-#if WINDOWS_PHONE && ( defined(__x86__) || defined(_M_I86) || defined(_M_IX86) )
 
-// dummy definitions for incomplete x86 build for Windows Phone 8
+#if !defined(__arm__)
 
-void s3eDebugIsDebuggerPresent();
+// dummy definitions for incomplete x86 build for Windows Phone 8;
+// since we build for mobile only, exclude only __arm__ builds.
+
+void s3eDebugIsDebuggerPresent() {}
+void s3eFileClose() {}
 
 #endif
