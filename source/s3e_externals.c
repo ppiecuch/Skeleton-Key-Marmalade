@@ -365,4 +365,28 @@ void __glIsFramebuffer() {}
 void __glIsRenderbuffer() {}
 void __glRenderbufferStorage() {}
 
+void eglBindAPI() {}
+void eglMakeCurrent() {}
+void eglGetConfigAttrib() {}
+void eglCreatePbufferSurface() {}
+void eglDestroySurface() {}
+void eglReleaseTexImage() {}
+void eglCreateContext() {}
+void eglDestroyContext() {}
+void eglGetCurrentContext() {}
+void eglGetError() {}
+void eglGetDisplay() {}
+void eglInitialize() {}
+void eglTerminate() {}
+void eglQueryString() {}
+void eglCreateWindowSurface() {}
+void eglGetCurrentSurface() {}
+void eglGetCurrentDisplay() {}
+void eglQueryContext() {}
+void eglSwapBuffers() {}
+void eglGetProcAddress() {}
+void eglGetConfigs() {}
+void eglQuerySurface() {}
+void _eglBindTexImage() {}
+
 #endif
