@@ -1,5 +1,5 @@
 
-#if defined(__arm__) || defined(arm)
+#if defined(__arm__) || defined(arm) || defined(__ARM__) || defined(__ARM_NEON__)
 
 // skip - arm build is fine
 
