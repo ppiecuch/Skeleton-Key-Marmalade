@@ -34,6 +34,7 @@ void s3eFileOpen() {}
 void s3eFileClose() {}
 void s3eFileRead() {}
 void s3eFileGetSize() {}
+void s3eMallocBase() {}
 void __s3eMallocBase() {}
 void s3eFreeBase() {}
 void s3eSoundSetInt() {}
