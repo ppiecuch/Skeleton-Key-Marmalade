@@ -59,13 +59,8 @@ void gameInit() {
 	else
 		IGLog("Attached derbh archive sound.dz");
 	
-	// iphone, bada only need gles1
-	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_BADA || AIRPLAY_DEVICE == AIRPLAY_DEVICE_IPHONE || AIRPLAY_DEVICE == AIRPLAY_DEVICE_BB10) {
-		if(dzArchiveAttach("gles1.dz") == S3E_RESULT_ERROR)
-			IGLog("Error attaching derbh archive gles1.dz");
-	}
 	// android needs gles1 and gles1-atitc
-	else if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_ANDROID) {
+	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_ANDROID) {
 		char buildStyle[128];
 		if(s3eConfigGetString("RESMANAGER", "ResBuildStyle", buildStyle) == S3E_RESULT_SUCCESS) {
 			if((strcmp(buildStyle, "gles1") != 0) && strcmp(buildStyle, "gles1-atitc") != 0)
@@ -83,6 +78,10 @@ void gameInit() {
 		} else {
 			IGLog("Error, no buildStyle");
 		}
+	} else {
+	  // only need gles1
+	  if(dzArchiveAttach("gles1.dz") == S3E_RESULT_ERROR)
+	    IGLog("Error attaching derbh archive gles1.dz");
 	}
 	
 	// load the rest of the game
@@ -100,21 +99,21 @@ void gameInit() {
 void gameStart() {
 	// if this is the 7th time opening the game, pop up the nag screen
 #if 0
-	if(Settings::getInstance()->loadCount == 7) {
-		// go to the nag scene
-		IGDirector::getInstance()->switchScene(new SceneNag());
-	} else
+    if(Settings::getInstance()->loadCount == 7) {
+      // go to the nag scene
+      IGDirector::getInstance()->switchScene(new SceneNag());
+    } else
 #endif
     {
-		// if there's a game in progress, go to game menu
-		if(GameData::getInstance()->loadGame()) {
-			IGDirector::getInstance()->switchScene(new SceneGameMenu());
-		}
-		// otherwise go to menu
-		else {
-			IGDirector::getInstance()->switchScene(new SceneMenu());
-		}
-	}
+      // if there's a game in progress, go to game menu
+      if(GameData::getInstance()->loadGame()) {
+	IGDirector::getInstance()->switchScene(new SceneGameMenu());
+      }
+      // otherwise go to menu
+      else {
+	IGDirector::getInstance()->switchScene(new SceneMenu());
+      }
+    }
 }
 
 void gameShutdown() {
@@ -174,8 +173,14 @@ int main(int argc, char* argv[]) {
 		frame++;
 		IGDirector::getInstance()->update();
 		if(s3eDeviceCheckQuitRequest())
-			break; 
-		
+			break;
+		if(s3eKeyboardGetState(s3eKeyBack)&S3E_KEY_STATE_RELEASED)
+		  if(GameData::getInstance()->activeGame) {
+		    GameData::getInstance()->activeGame = false;
+		    IGDirector::getInstance()->switchScene(new SceneGameMenu());
+		  } else
+		    break; // quit
+
 		// render graphics
 		IGDirector::getInstance()->display();
 		Iw2DSurfaceShow();
