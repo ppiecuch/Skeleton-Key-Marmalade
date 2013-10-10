@@ -8,7 +8,7 @@
 // dummy definitions for incomplete x86 build for Windows Phone 8;
 // since we build for mobile only, exclude only __arm__ builds.
 
-void DllEntryPoint() {}
+void DllEntryPoint(int a1, int a2, int a3) {}
 
 void s3eTimerGetMs() {}
 void s3eDebugIsDebuggerPresent() {}
