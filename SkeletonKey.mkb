@@ -127,6 +127,10 @@ deployments
 	blackberry-authorid='gYAAgJWWmDfer27CLcxm_P3mzK0'
 	blackberry-permissions-access-shared=1
 	##
+	wp8-author='KomSoft Oprogramowanie'
+	wp8-description='Shift keys around the board to unlock treasure chests - addictive and unique puzzle game.'
+	wp8-genre-isgame=1
+	wp8-publisher-id='{e92bcedf-47f3-4f13-b75d-307f56cdbdf3}'
 
 	version-major=1
 	version-minor=0
