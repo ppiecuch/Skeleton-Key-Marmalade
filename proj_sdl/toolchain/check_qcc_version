@@ -1,0 +1,8 @@
+#!/bin/bash
+v=`gsed --version`
+if [[ $? -ne 0 ]]; then
+    cmd='$QNX_HOST/usr/bin/qcc -V 2>&1 | head -2 | tail -1 | sed -e "s/,.*//"'
+else
+    cmd='$QNX_HOST/usr/bin/qcc -V 2>&1 | gsed -n "/,/{s/,.*//;p;q}" '
+fi
+eval $cmd

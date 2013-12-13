@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<qnx xmlns="http://www.qnx.com/schemas/application/1.0">
+    <id>com.komsoft.neurocube</id>
+    <filename>NeuroCube</filename>
+    <name>NeuroCube</name>
+    <author>KomSoft Oprogramowanie</author>
+    <copyright>2013-2014 (c) KomSoft Oprogramowanie</copyright>
+    <authorId>gYAAgJWWmDfer27CLcxm_P3mzK0</authorId>
+    <versionNumber>%VER_NUMBER%</versionNumber>
+    <versionLabel>%VER_LABEL%</versionLabel>
+    <platformVersion>%REQ_PLATF_VER%</platformVersion>
+    <buildId>%BUILD_ID%</buildId>
+    <initialWindow>
+        <systemChrome>none</systemChrome>
+        <transparent>false</transparent>
+        <autoOrients>true</autoOrients>
+    </initialWindow>
+    <publisher>KomSoft</publisher>
+    <action system="true">run_native</action>
+    <action>access_shared</action>
+    <action>play_audio</action>
+    <action>set_audio_volume</action>
+    <action>use_gamepad</action>
+    <action>read_device_identifying_information</action>
+    <category>core.games</category>
+    <!--  The icon for the application, which should be 86x86/114x114. -->
+    <icon>
+      <image>Icon86.png</image>
+      <image>Icon114.png</image>
+    </icon>
+    <!--  The splash screen that will appear when your application is launching. Should be 1024x600. -->
+    <splashscreens>
+      <image>splash1024x600.png</image>
+    </splashscreens>
+    <splashscreen>splash1024x600.png</splashscreen>
+    <asset path="NeuroCube" entry="true">NeuroCube</asset>
+    <asset path="Icon86.png">Icon86.png</asset>
+    <asset path="Icon114.png">Icon114.png</asset>
+    <asset path="splash1024x600.png">splash1024x600.png</asset>
+    <!-- Ensure that shared libraries in the package are found at run-time. -->
+    <env var="LD_LIBRARY_PATH" value="app/native/lib"/>
+    <asset path="lib/libTouchControlOverlay.so.1" type="Qnx/Elf">lib/libTouchControlOverlay.so.1</asset>
+    <asset path="lib/libSDL-1.2.so.12" type="Qnx/Elf">lib/libSDL-1.2.so.12</asset>
+    <asset path="lib/libGLES_bc.so.1" type="Qnx/Elf">lib/libGLES_bc.so.1</asset>
+    <!-- NeuroCube data resources. -->
+    <asset path="./data">data</asset>
+</qnx>

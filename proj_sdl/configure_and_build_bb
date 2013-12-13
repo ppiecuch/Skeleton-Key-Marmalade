@@ -1,0 +1,175 @@
+#!/bin/bash
+
+# -Wc,-std=c++0x
+
+# Default make  target
+
+TARGET=""
+VERBOSE=""
+MESSAGE=""
+
+# Check and rebuild arguments
+options=()  # the buffer array for the parameters
+while [[ $1 ]]
+do
+    case "$1" in
+	playbook*)
+	    PLAT="/Developer/SDKs/bbndk-2.1.0/bbndk-env.sh"
+	    ;;
+	bb10*)
+	    PLAT="/Developer/SDKs/bbndk/bbndk-env.sh"
+	    ;;
+	run*)
+	    TARGET="run"
+	    MESSAGE=" for target: Run"
+	    ;;
+	clean*)
+	    TARGET="clean"
+	    ;;
+	verbose*)
+	    VERBOSE="VERBOSE=1"
+	    ;;
+	dist*)
+	    TARGET="release"
+	    ;;
+	debug*)
+	    BUILDTYPE="Debug"
+	    if grep --quiet "CMAKE_BUILD_TYPE:STRING=${BUILDTYPE}" CMakeCache.txt; then
+		echo "** Config unchanged."
+	    else
+		echo "** Force to reconfigure build."
+		rm -f cmake.ts
+	    fi
+	    ;;
+	configure*)
+	    echo "** Force to reconfigure build."
+	    rm -f cmake.ts
+	    ;;
+	*)
+	    options+=("$1")
+	    ;;
+    esac
+    shift
+done
+# Reload arguments with remaing ones:
+set -- "${options[@]}"
+
+if [ ".$PLAT" == "." ]; then
+    PLAT=`grep PLAT_SDK CMakeCache.txt | cut -f 2 -d=`
+fi
+if [ -x "$PLAT" ]; then
+    . $PLAT
+elif [ ".$PLAT" == "." ]; then
+    echo "*** $0: Specify playbook or bb10 for SDK selection."
+    exit
+else
+    echo "*** '$PLAT' not found!'"
+    exit
+fi
+
+echo "** Platform SDK: $PLAT"
+
+CPU="$1$2"
+
+if [ ".$CPU" == "." ]; then
+    set -- "arm" "v7le"
+    CPU="$1$2"
+    echo "** Target architecture could not be determined. Using: $1/$2"
+fi
+
+if [ "$2" == "v7le" ]; then
+    CPUDIR="$1le-v7"
+    BUSUFFIX="$1v7"
+elif [ "$2" == "a9" ]; then
+    CPUDIR="$1le-v7"
+    CPU="$1v7le"
+    BUSUFFIX="$1v7"
+    CPUGEN="a9"
+else
+    CPUDIR="$CPU"
+    BUSUFFIX="$1"
+fi
+
+if [ "$STAGE_DIR" == "" ]; then
+    STAGE_DIR="${QNX_TARGET}"
+    echo "** Staging directory could not be determined. Using: $STAGE_DIR"
+else
+    echo "** Using staging directory: $STAGE_DIR"
+fi
+
+if [ ! -z "$USE_ICECC" ] ; then
+    CC_COMMAND=icecc
+    echo "Using icecream for distributed compiling"
+else
+    CC_COMMAND=$QNX_HOST/usr/bin/qcc
+fi
+
+if [ -z "$BUILDTYPE" ] ; then
+    BUILDTYPE="Release"
+fi
+
+echo "** Build type: $BUILDTYPE"
+
+if [ ! -z "$PROFILE" ] ; then
+    PROFILER_FLAGS="-p"
+else
+    PROFILER_FLAGS=""
+fi
+
+if [ "$CCWRAP" ] ; then
+    CMAKE_EXTRA_OPTIONS=" \
+        -DCMAKE_C_COMPILER_ARG1=qcc \
+        -DCMAKE_CXX_COMPILER_ARG1=qcc"
+    CC_COMMAND="$CCWRAP"
+fi
+
+if [ "$CPUGEN" == "a9" ] ; then
+    CMAKE_EXTRA_OPTIONS=" \
+        -DTARGET_IS_WINCHESTER=1 \
+        $CMAKE_EXTRA_OPTIONS"
+fi
+
+if [ `uname` == "Darwin" ] ; then
+    CMAKE_EXTRA_OPTIONS=" \
+        -DCMAKE_SKIP_RPATH='ON' \
+        $CMAKE_EXTRA_OPTIONS"
+fi
+
+sdl_root="$HOME/Software/SDL-1/dist/playbook/"
+if [ ! -d $sdl_root ]; then
+    echo "** SDL installation not found at $sdl_root"
+    exit
+fi
+
+script=`basename $0`
+
+if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $script -nt cmake.ts ]; then
+ rm -rf cmake.ts
+ cmake \
+    -DPLAT_SDK="$PLAT" \
+    -DCPU="$CPU" \
+    -DBUSUFFIX="$BUSUFFIX" \
+    -DCC_COMMAND="$CC_COMMAND" \
+    -DQNX_TARGET="$QNX_TARGET" \
+    -DQNX_HOST="$QNX_HOST" \
+    -DSTAGE_DIR="$STAGE_DIR" \
+    -DQCC_VERSION_CHECK="`pwd`/toolchain/check_qcc_version" \
+    -DCMAKE_TOOLCHAIN_FILE="`pwd`/toolchain/qnx.toolchain.cmake" \
+    -DCMAKE_SYSTEM_PROCESSOR="$CPUDIR" \
+    -DCMAKE_EXTRA_OPTIONS="$CMAKE_EXTRA_OPTIONS" \
+    -DCMAKE_BUILD_TYPE="$BUILDTYPE" \
+    -DCMAKE_INSTALL_PREFIX="$STAGE_DIR" \
+    -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE \
+    -DSDLDIR="$sdl_root" \
+    -DSIGNING_PASSWORD="awec12" \
+    -DDEBUG_TOKEN="`pwd`/debugtoken1.bar" \
+    -DDEVICE_PASSWORD="1234" \
+    -G"Eclipse CDT4 - Unix Makefiles" \
+    $CMAKE_EXTRA_OPTIONS \
+    $3 ./ \
+&& touch cmake.ts \
+&& make $VERBOSE $TARGET \
+&& terminal-notifier -message "$0 script finished$MESSAGE" -title "BUILDER" >> /dev/null
+else
+ make $VERBOSE $TARGET && terminal-notifier -message "$0 script finished$MESSAGE" -title "BUILDER" >> /dev/null
+fi

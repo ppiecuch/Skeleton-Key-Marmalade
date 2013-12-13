@@ -1,0 +1,26 @@
+#!/bin/bash
+
+SDK=/Developer/SDKs/bbndk
+SDKROOT=$SDK/target_10_0_9_1673/macosx/x86
+
+. $SDK/bbndk-env.sh
+
+
+dep=./build_skeletonkey_xcode/deployments/default
+bar=SkeletonKey.bar
+
+for dev in playbook bb10; do
+	if [ -e "$dep/$dev/release/$bar" ]; then
+		echo "installing release build.";
+		f="$dep/$dev/release/$bar";
+	elif [ -e "$dep/$dev/debug/$bar" ]; then
+        	echo "installing debug build.";
+        	f="$dep/$dev/debug/$bar";
+	fi
+done
+
+if [ ".$f" == "." ]; then
+	echo "nothing to install"
+else
+	blackberry-deploy -installApp -device 169.254.0.1 -password 1234 -package $f
+fi

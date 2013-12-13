@@ -204,8 +204,9 @@ if(NOT SDL_FOUND)
  endif()
 
 # game files:
-set(SOURCE_ROOT ${PROJECT_SOURCE_DIR}/../source)
-set(NeuroCube_Src_Files
+set( LOCAL_SOURCE_ROOT ${PROJECT_SOURCE_DIR}/source )
+set( SOURCE_ROOT ${PROJECT_SOURCE_DIR}/../source )
+set(SkeletonKey_Src_Files
 	## (source)
 	${SOURCE_ROOT}/main.cpp
 	${SOURCE_ROOT}/config.h
@@ -265,23 +266,33 @@ set(NeuroCube_Src_Files
     	${SOURCE_ROOT}/sqlite3/sqlite3.h
     	${SOURCE_ROOT}/sqlite3/sqlite3ext.h
     	${SOURCE_ROOT}/sqlite3/sqlite3.c
+	## (compat)
+    	${LOCAL_SOURCE_ROOT}/compat/s3e.cpp
+	${LOCAL_SOURCE_ROOT}/stb/image_DXT.h
+	${LOCAL_SOURCE_ROOT}/stb/image_DXT.c
+	${LOCAL_SOURCE_ROOT}/stb/image_helper.h
+	${LOCAL_SOURCE_ROOT}/stb/image_helper.c
+	${LOCAL_SOURCE_ROOT}/stb/stb_image.h
+	${LOCAL_SOURCE_ROOT}/stb/stb_image_aug.c
+	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS.h
+	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS_aug_c.h
 )
 
 # platform dependant game files:
 if (NC_BUILD_PLATFORM_QNX)
-   set(NeuroCube_Src_PlatfFiles
-	Qnx/_bb_simple_audio_engine.cpp
-	Qnx/_bb_simple_audio_engine.h
+   set(SkeletonKey_Src_PlatfFiles
+	${LOCAL_SOURCE_ROOT}/Qnx/_bb_simple_audio_engine.cpp
+	${LOCAL_SOURCE_ROOT}/Qnx/_bb_simple_audio_engine.h
    )
 endif(NC_BUILD_PLATFORM_QNX)
 
 if (NC_BUILD_PLATFORM_IOS)
-   set(NeuroCube_Src_PlatfFiles
+   set(SkeletonKey_Src_PlatfFiles
    )
 endif(NC_BUILD_PLATFORM_IOS)
  
 if (NC_BUILD_PLATFORM_QNX)
-   set_source_files_properties(${NeuroCube_Src_PlatfFiles} ${NeuroCube_Src_Files}
+   set_source_files_properties(${SkeletonKey_Src_PlatfFiles} ${SkeletonKey_Src_Files}
        PROPERTIES
        COMPILE_FLAGS  "${SDL_CFLAGS} -Wno-psabi -Duint8=uint8_t -Dint8=int8_t -Duint16=uint16_t -Duint32=uint32_t -DBOOL=int -DYES=1 -DNO=0")
    set(PLATF_LIBS
@@ -313,25 +324,16 @@ endif (NC_BUILD_PLATFORM_IOS)
 set( THIRD_PARTY ./third_party/ )
 
 include_directories(
-	./compat/
 	${SDL_INCLUDE_DIR}
-	${SOURCE_ROOT}/stb
-	${SOURCE_ROOT}/sheeplib/include
-	${SOURCE_ROOT}/opengl
-	${SOURCE_ROOT}/libc
-	${SOURCE_ROOT}/ext
-	${SOURCE_ROOT}/res/atlas
-	${SOURCE_ROOT}/Qnx
+	${LOCAL_SOURCE_ROOT}/compat/
+	${LOCAL_SOURCE_ROOT}/stb/
+	${LOCAL_SOURCE_ROOT}/Qnx
 	${SOURCE_ROOT}/source
-	${SOURCE_ROOT}
 )
 link_directories(
 	${SDL_LIB_DIR}
 )
 
-if (APPLE)
-       	set_target_properties(NeuroCube PROPERTIES OSX_ARCHITECTURES "i386;" )
-endif()
 #Main resource files:
 SET( DATA_ROOT ../data )
 SET(SkeleteonKey_Data_Files
@@ -606,11 +608,11 @@ if (NC_BUILD_PLATFORM_QNX)
    #Rebuild project if any of the libraries has changed:
    JOIN("${BB10_SO_FILES}" ";" BB10_SO_FILES_S)
    SET_SOURCE_FILES_PROPERTIES(
-	${NeuroCube_Src_Files}
+	${SkeletonKey_Src_Files}
 	PROPERTIES OBJECT_DEPENDS "${BB10_SO_FILES_S}"
    )
    SET_SOURCE_FILES_PROPERTIES(
-	${NeuroCube_Src_PlatfFiles}
+	${SkeletonKey_Src_PlatfFiles}
 	PROPERTIES OBJECT_DEPENDS "${BB10_SO_FILES_S}"
    )
    #Get the full .so name:
@@ -622,8 +624,8 @@ if (NC_BUILD_PLATFORM_QNX)
 		PROPERTIES TARGET_PATH "./lib"
    	)
    ENDFOREACH()
-   LIST( APPEND BB10_FILES ${NeuroCube_Data_Files} )
-   LIST( APPEND BB10_FILES ${NeuroCube_DataGfx_Files} )
+   LIST( APPEND BB10_FILES ${SkeletonKey_Data_Files} )
+   LIST( APPEND BB10_FILES ${SkeletonKey_DataGfx_Files} )
    LIST( APPEND BB10_FILES ${Sdl_Fonts_Files} )
    FOREACH(file ${BB10_FILES})
 	GET_FILENAME_COMPONENT(filename ${file} NAME)
@@ -677,7 +679,7 @@ if (NC_BUILD_PLATFORM_QNX)
 		COMMENT "Copying ${filename}"
 	   )
 	endif()
-	LIST( APPEND NeuroCube_Src_PlatfFiles ${NC_DIST_DIRECTORY}/${path}/${dest} )
+	LIST( APPEND SkeletonKey_Src_PlatfFiles ${NC_DIST_DIRECTORY}/${path}/${dest} )
 	LIST( APPEND DIST_FILES ${NC_DIST_DIRECTORY}/${path}/${dest} )
    ENDFOREACH()
  endif (NC_BUILD_PLATFORM_QNX)
@@ -687,30 +689,35 @@ if (NC_BUILD_PLATFORM_QNX)
 add_definitions("-DROCKET_WITH_FREETYPE")
 
 if (NC_BUILD_PLATFORM_QNX)
-    	add_executable( NeuroCube
-			${NeuroCube_Src_Files}
-			${NeuroCube_Src_PlatfFiles}
-			${NeuroCube_Hdr_Files}
+    	add_executable( SkeletonKey
+			${SkeletonKey_Src_Files}
+			${SkeletonKey_Src_PlatfFiles}
+			${SkeletonKey_Hdr_Files}
 			${libRocket_Src_Files} )
 elseif (WIN32)
-    	add_executable( NeuroCube WIN32 
-			${NeuroCube_Src_Files}
-			${NeuroCube_Src_PlatfFiles}
-			${NeuroCube_Hdr_Files} 
+    	add_executable( SkeletonKey WIN32 
+			${SkeletonKey_Src_Files}
+			${SkeletonKey_Src_PlatfFiles}
+			${SkeletonKey_Hdr_Files} 
 			${libRocket_Src_Files} )
 elseif(APPLE)
-	add_executable( NeuroCube MACOSX_BUNDLE
-			${NeuroCube_Src_Files}
-    			${NeuroCube_Src_PlatfFiles}
-			${NeuroCube_Hdr_Files}
+	add_executable( SkeletonKey MACOSX_BUNDLE
+			${SkeletonKey_Src_Files}
+    			${SkeletonKey_Src_PlatfFiles}
+			${SkeletonKey_Hdr_Files}
 			${libRocket_Src_Files} )
 endif()
     
-target_link_libraries( NeuroCube ${SDL_LIBRARY} ${PLATF_LIBS})
+target_link_libraries( SkeletonKey ${SDL_LIBRARY} ${PLATF_LIBS})
 
+# Target properties:
+
+if (APPLE)
+       	set_target_properties(SkeletonKey PROPERTIES OSX_ARCHITECTURES "i386;" )
+endif()
 
 # Optional packaging:
 
 if (COMMAND COMPILE)
-   COMPILE( NeuroCube ${BUILD_VER} ${DIST_FILES} )
+   COMPILE( SkeletonKey ${BUILD_VER} ${DIST_FILES} )
 endif(COMMAND COMPILE)

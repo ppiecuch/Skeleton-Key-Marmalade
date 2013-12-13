@@ -1,0 +1,13 @@
+#!/bin/bash
+
+SDK=/Developer/SDKs/bbndk
+SDKROOT=$SDK/target_10_0_9_1673/macosx/x86
+DEVICEIP=169.254.0.1
+DEVICEPW=1234
+
+. $SDK/bbndk-env.sh
+
+# create and deply debug token:
+blackberry-debugtokenrequest -devicepin 2A1A754E -devicepin 5010EA59 -storepass awec12 "debugtoken1.bar"
+blackberry-deploy -installDebugToken "debugtoken1.bar" -device $DEVICEIP -password $DEVICEPW
+unzip debugtoken1.bar META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF | grep Author-Id && rm -rf META-INF

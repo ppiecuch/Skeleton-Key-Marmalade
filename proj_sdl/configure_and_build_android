@@ -1,0 +1,13 @@
+#!/bin/bash
+
+export ANDROID_SDK=~/Software/0-Runtime/android-sdk-mac_x86
+export ANDROID_NDK=$HOME/Software/0-Runtime/android-ndk-r8c
+export PATH=$PATH:$ANDROID_NDK/tools:$ANDROID_NDK/platform-tools
+
+$TARGET=""
+
+cmake -DCMAKE_TOOLCHAIN_FILE="`pwd`/toolchain/android.toolchain.cmake" \
+	-DANDROID_ABI=armeabi-v7a \
+	-DANDROID_NATIVE_API_LEVEL=9 \
+	$TARGET \
+    && make
