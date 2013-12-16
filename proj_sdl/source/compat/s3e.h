@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <SDL/SDL.h>
@@ -60,13 +61,13 @@ enum s3eKeys {
 
 void s3eDebugOutputString(const char *fmt, ...);
 
-void* s3eMallocBase(int size);
-void s3eFreeBase(void* item);
+inline static void* s3eMallocBase(int size) { return malloc(size); }
+inline static void s3eFreeBase(void* item) { free(item); }
 
 typedef FILE s3eFile;
 
-s3eFile* s3eFileOpen(const char* filename, const char* mode);
-s3eResult s3eFileClose(s3eFile* file);
+inline static s3eFile* s3eFileOpen(const char* filename, const char* mode) { return fopen(filename, mode); }
+inline static s3eResult s3eFileClose(s3eFile* file) { return fclose(file)?S3E_RESULT_ERROR:S3E_RESULT_SUCCESS; }
 uint32 s3eFileRead(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file);
 uint32 s3eFileWrite(const void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file);
 int32 s3eFileGetSize(s3eFile* file);

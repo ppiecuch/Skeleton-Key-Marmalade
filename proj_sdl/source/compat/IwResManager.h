@@ -1,8 +1,8 @@
 #ifndef __compat_iwresmanager_h__
 #define __compat_iwresmanager_h__
 
-void IwResManagerInit();
-void IwResManagerTerminate();
+inline static void IwResManagerInit() { }
+inline static void IwResManagerTerminate() { }
 
 struct CIwResGroup
 {
@@ -13,8 +13,8 @@ struct IwGetResManagerS;
 static struct IwGetResManagerS 
 {
   void LoadGroup(const char *grp) { }
-  int GetNumGroups();
-  CIwResGroup *GetGroup(int index);
+  int GetNumGroups() { return 0; }
+  CIwResGroup *GetGroup(int index) { return NULL; }
   void DestroyGroup(CIwResGroup *g) { }
   IwGetResManagerS *operator ()() { return this; }
 } IwGetResManager;

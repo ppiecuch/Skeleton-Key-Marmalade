@@ -11,8 +11,7 @@ class CIw2DImage
  public:
     virtual float GetWidth();
     virtual float GetHeight();
-    virtual CIwMat2D* GetMaterial();
-    virtual ~CIw2DImage() {};
+    virtual ~CIw2DImage();
 };
 
 enum CIw2DFontAlign
@@ -28,10 +27,11 @@ class CIw2DFont
 {
 };
 
-void Iw2DInit();
-void Iw2DTerminate();
-void Iw2DSurfaceShow();
+inline static void Iw2DInit() { }
+inline static void Iw2DTerminate() { }
+inline static void Iw2DSurfaceShow() { }
 void Iw2DFinishDrawing();
+// always full screen
 uint32 Iw2DGetSurfaceHeight();
 uint32 Iw2DGetSurfaceWidth();
 void Iw2DSetTransformMatrix(const CIwMat2D &m);
@@ -39,9 +39,14 @@ void Iw2DDrawString(const char* string, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFo
 void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size);
 void Iw2DSetFont(const CIw2DFont *f);
 void Iw2DSetColour(const uint32 color);
-// only for full size clearing:
-void Iw2DFillRect(CIwFVec2 topLeft, CIwFVec2 size);
-
+#ifdef __S3E__
+inline static void Iw2DClearScreen(const uint32 color) {
+  Iw2DSetColour(IGDistorter::getInstance()->colorBlackInt);
+  Iw2DFillRect(CIwSVec2(0,0), CIwSVec2(Iw2DGetSurfaceWidth(), Iw2DGetSurfaceHeight()));
+}
+#else
+void Iw2DClearScreen(const uint32 color);
+#endif
 CIw2DImage* Iw2DCreateImageResource(const char* resource);
 CIw2DFont* Iw2DCreateFontResource(const char* resource);
 

@@ -1,8 +1,18 @@
 #include "s3e.h"
 #include "IwGx.h"
 #include "Iw2D.h"
+#include <SDL/SDL_opengl.h>
+#include <string>
+#include <stb_image.h>
 #include <stdio.h>
 #include <unistd.h>
+
+const float FColorRGB = 1./255.;
+
+#define ABGR_RED2F(c)      (((c)&0x000000ff)*FColorRGB)
+#define ABGR_GREEN2F(c)    ((((c)>>8)&0x000000ff)*FColorRGB)
+#define ABGR_BLUE2F(c)	   ((((c)>>16)&0x000000ff)*FColorRGB)
+#define ABGR_ALPHA2F(c)    ((((c)>>24)&0x000000ff)*FColorRGB)
 
 const char *resourceRoot () {
 
@@ -51,17 +61,61 @@ const char *writePath (const char *file) {
 #endif
 }
 
-
 class CcIw2DImage : public CIw2DImage
 {
 private:
-  CIwIVec2 pos;
   CIwIVec2 size;
-  CIwIVec2 anchor;
+  std::string file;
+  std::string error;
 public:
+  CcIw2DImage(const char* from_file) {
+
+    file = from_file;
+
+    int width, height, channels;
+    const int force_channels = 0;
+    
+    // try to read raw data:
+    unsigned char *idata = stbi_load( resourcePath(from_file), &width, &height, &channels, force_channels );
+    if( idata == NULL ) {
+      fprintf(stderr, "[CcIw2DImage] Failed to get raw data from the file %s - image not supported or not an image (%s).\n", 
+	      from_file, stbi_failure_reason());
+      error = stbi_failure_reason();
+      return;
+    }
+  }
   virtual float GetWidth() { return size.x; }
   virtual float GetHeight()  { return size.y; }
-  virtual CIwMat2D* GetMaterial();
+
   virtual ~CcIw2DImage() {};
+  // --
+  const char *GetErrorString() { error.empty()?NULL:error.c_str(); }
 };
 
+uint32 Iw2DGetSurfaceHeight() {
+  #if defined __BB10__
+  return 1280;
+  #elif defined __PLAYBOOK__
+  return 600;
+  #else
+  #error Cannot determine device.
+  #endif
+}
+uint32 Iw2DGetSurfaceWidth() {
+  #if defined __BB10__
+  return 768;
+  #elif defined __PLAYBOOK__
+  return 1024;
+  #else
+  #error Cannot determine device.
+  #endif
+}
+
+void Iw2DClearScreen(const uint32 color) {
+  glClearColor(ABGR_RED2F(color), ABGR_GREEN2F(color), ABGR_BLUE2F(color), ABGR_ALPHA2F(color));
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void Iw2DFinishDrawing() {
+  SDL_GL_SwapBuffers();
+}
