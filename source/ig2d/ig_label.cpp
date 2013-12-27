@@ -48,7 +48,7 @@ IGLabel::~IGLabel() {
 
 void IGLabel::display() {
 	if(font != NULL) {
-		Iw2DSetFont(font);		// set the font
+		Iw2DSetFont(font);	// set the font
 		Iw2DSetColour(color);	// set the color
 		
 		// draw the string

@@ -2,9 +2,6 @@
 #ifndef SOUNDS_H
 #define SOUNDS_H
 
-#include "s3eSound.h"
-#include "s3eAudio.h"
-
 class Sounds {
 public:
 	// return the instance
@@ -43,6 +40,7 @@ private:
 	struct Sound {
 		int16* buffer;
 		int32 fileSize;
+		char fileName[256];
 	};
 
 	// sound methods

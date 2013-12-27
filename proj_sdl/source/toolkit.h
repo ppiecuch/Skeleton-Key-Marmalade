@@ -111,3 +111,7 @@ int imgui_slider(int id, float x, float y, float w, float h, int bg, int thumb, 
 int imgui_textfield(int id, ACFont &font, int x, int y, int w, int h, char *buffer, int maxlen, int base, int face, int hot, int textcolor);
 void imgui_prepare();
 void imgui_finish();
+
+const char *resourceRoot ();
+const char *resourcePath (const char *filename);
+const char *writePath (const char *file);

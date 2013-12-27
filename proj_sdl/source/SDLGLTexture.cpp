@@ -9,6 +9,9 @@
 #include <string>
 #include <iostream>
 #include "SDLGLTexture.hpp"
+#include <SDL/SDL_image.h>
+
+extern "C" SDL_Surface *IMG_Load(const char *imagename);
 
 /**
  * \brief Frees a texture from video memory.

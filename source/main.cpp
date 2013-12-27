@@ -3,6 +3,7 @@
 #include "s3e.h"
 #include "IwGx.h"
 #include "Iw2D.h"
+#include "IwResManager.h"
 #include "ig2d/ig.h"
 #include "scene_nag.h"
 #include "scene_game.h"
@@ -15,14 +16,17 @@
 #include "achievements.h"
 #include "config.h"
 
+// How big a tick difference is considered 'time warp', i.e. skip the time
+// (to avoid physics blowing up)
+#define TICK_TIMEWARP 1000
 // attempt to lock frame rate to 30 fps
 #define	MS_PER_FRAME (1000 / 30)
 
 // airplay callbacks
 int32 callbackPause(void* systemData, void* userData) {
 	IGLog("PAUSED");
-	/*// if the game is active on pause
-	if(GameData::getInstance()->activeGame) {
+	// if the game is active on pause
+	/*if(GameData::getInstance()->activeGame) {
 		// switch scene to NULL and unload everything
 		IGDirector::getInstance()->switchScene(NULL);
 		IGScene::unloadResources();
@@ -32,8 +36,8 @@ int32 callbackPause(void* systemData, void* userData) {
 }
 int32 callbackUnpause(void* systemData, void* userData) {
 	IGLog("UNPAUSED");
-	/*// if the game is active on resume
-	if(GameData::getInstance()->activeGame) {
+	// if the game is active on resume
+	/*if(GameData::getInstance()->activeGame) {
 		// switch back to game menu
 		GameData::getInstance()->activeGame = false;
 		IGDirector::getInstance()->switchScene(new SceneGameMenu());
@@ -97,7 +101,7 @@ void gameInit() {
 }
 
 void gameStart() {
-	// if this is the 7th time opening the game, pop up the nag screen
+    // if this is the 7th time opening the game, pop up the nag screen
 #if 0
     if(Settings::getInstance()->loadCount == 7) {
       // go to the nag scene

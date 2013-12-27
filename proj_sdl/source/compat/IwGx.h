@@ -5,6 +5,8 @@
 #include "IwColour.h"
 #include "IwFColour.h"
 
+#include "AffineTransform.h"
+
 template<typename T> class CIwVec2
 {
 public:
@@ -22,11 +24,11 @@ typedef CIwVec2<int> CIwIVec2;
 typedef CIwVec2<int16> CIwSVec2;
 typedef CIwVec2<float> CIwFVec2;
 
-class CIwMat2D
+class CIwMat2D : public affinetransform::AffineTransformT<float>
 {
  public:
-  void SetIdentity();
-  void Scale(float sc);
+  void SetIdentity() { identity(); }
+  void Scale(float sc) { scale(sc); }
 };
 
 #endif /* __compat_iwgx_h__ */

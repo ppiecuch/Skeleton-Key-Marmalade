@@ -30,7 +30,7 @@
 # include <windows.h>
 #endif
 
-#include "GLHeaders.h"
+#include <SDL/SDL_opengl.h>
 
 # define EXPORT
 

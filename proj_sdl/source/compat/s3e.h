@@ -59,7 +59,7 @@ enum s3eKeys {
 
 #define IW_FIXED(v) (v)
 
-void s3eDebugOutputString(const char *fmt, ...);
+#define s3eDebugOutputString(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
 
 inline static void* s3eMallocBase(int size) { return malloc(size); }
 inline static void s3eFreeBase(void* item) { free(item); }
@@ -68,8 +68,8 @@ typedef FILE s3eFile;
 
 inline static s3eFile* s3eFileOpen(const char* filename, const char* mode) { return fopen(filename, mode); }
 inline static s3eResult s3eFileClose(s3eFile* file) { return fclose(file)?S3E_RESULT_ERROR:S3E_RESULT_SUCCESS; }
-uint32 s3eFileRead(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file);
-uint32 s3eFileWrite(const void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file);
+inline static uint32 s3eFileRead(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file) { return fwrite(buffer, elemSize, noElems, file); }
+inline static uint32 s3eFileWrite(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file)  { return fread(buffer, elemSize, noElems, file); }
 int32 s3eFileGetSize(s3eFile* file);
 
 inline static uint32 s3eTimerGetMs() { return SDL_GetTicks(); }
@@ -82,15 +82,15 @@ inline static s3eResult s3eDeviceUnRegister(s3eEnum ev, s3eCallback fn) { }
 
 inline static void s3eKeyboardUpdate() { }
 inline static s3eEnum s3eKeyboardGetState(s3eKeys key) { }
-inline static s3eBool s3eDeviceCheckQuitRequest() { return false; }
+inline static s3eBool s3eDeviceCheckQuitRequest() { return S3E_FALSE; }
 
-inline static s3eBool s3eExtOSExecAvailable() { return false; }
+inline static s3eBool s3eExtOSExecAvailable() { return S3E_FALSE; }
 inline static s3eResult s3eOSExecExecute(const char* url, s3eBool exit) { return S3E_RESULT_ERROR; }
-inline static s3eBool s3eIOSBackgroundMusicAvailable() { return true; }
-int32 s3eIOSBackgroundMusicGetInt(s3eEnum property);
-s3eResult s3eIOSBackgroundMusicPlay();
-s3eBool s3eIOSBackgroundAudioIsPlaying();
-s3eBool s3eIOSBackgroundAudioSetMix( s3eBool mix );
+inline static s3eBool s3eIOSBackgroundMusicAvailable() { return S3E_FALSE; }
+inline static int32 s3eIOSBackgroundMusicGetInt(s3eEnum property) { return 0; }
+inline static s3eResult s3eIOSBackgroundMusicPlay() { return S3E_RESULT_ERROR; }
+inline static s3eBool s3eIOSBackgroundAudioIsPlaying() { return S3E_FALSE; }
+inline static s3eBool s3eIOSBackgroundAudioSetMix( s3eBool mix ) { return S3E_FALSE; }
 
 inline static void s3eAccelerometerStart() { }
 inline static void s3eAccelerometerStop() { }
@@ -111,8 +111,10 @@ int s3eSoundGetFreeChannel();
 const char* s3eSoundGetErrorString();
 void s3eSoundSetInt(s3eEnum f, int v);
 
-const char *resourceRoot ();
-const char *resourcePath (const char *filename);
-const char *writePath (const char *file);
+#define f_ssprintf(...)                                 \
+    ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \
+    char *_ss_ret = (char*)alloca(_ss_size+1);          \
+    snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);       \
+    _ss_ret; })
 
 #endif /* __compat_s3e_h__ */

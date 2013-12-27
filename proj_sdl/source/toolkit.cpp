@@ -2,9 +2,11 @@
 #include <SDL_opengl.h>
 #include <SDL_image.h>
 #include <math.h>
+#include <unistd.h>
 #if 0
 # include "glee/glee.h"
 #endif
+#include "stb/stb_image.h"
 #include "toolkit.h"
 
 #ifdef USE_BASIC_POPUPS
@@ -18,6 +20,96 @@ Particle particle[MAX_PARTICLES];
 MersenneTwister gVisualRand, gPhysicsRand;
 UIState gUIState = {0,0,0,0,0,0,0,0,0,0};
 
+// =========================================================
+
+const char *resourceRoot () {
+
+#ifdef __QNXNTO__
+	static char cwd[FILENAME_MAX] = { 0 };
+
+	if (!*cwd) {
+	  getcwd(cwd, FILENAME_MAX - 1);
+	  strcat(cwd, "/app/native/data/");
+	}
+	
+	return cwd;
+#else
+	return "";
+#endif
+}
+
+const char *resourcePath (const char *filename) {
+
+  static char path[FILENAME_MAX] = { 0 };
+  
+  if (filename) {
+    snprintf(path, FILENAME_MAX, "%s%s", resourceRoot(), filename); return path;
+  } else
+    return resourceRoot();
+}
+
+const char *writePath (const char *file) {
+
+#if defined __QNXNTO__
+	// Let's write it in the current working directory's data folder
+	static char cwd[FILENAME_MAX] = { 0 };
+	static char path[FILENAME_MAX] = { 0 };
+
+	if (!*cwd) {
+		getcwd(cwd, FILENAME_MAX - 1);
+		strcat(cwd, "/data/");
+	}
+
+	if (file) {
+		snprintf(path, FILENAME_MAX, "%s%s", cwd, file); return path;
+	} else
+		return cwd;
+#else
+	return file;
+#endif
+}
+
+// =========================================================
+
+extern "C" SDL_Surface *IMG_Load(const char *imagename) {
+    SDL_Surface *image;
+    
+    /* Make sure there is something to do.. */
+    if ( imagename == NULL ) {
+      fprintf(stderr, "[IMG_Load] Passed a NULL data source");
+      return(NULL);
+    }
+  
+    int width, height, channels;
+    const int force_channels = 0;
+    
+    // try to read raw data:
+    unsigned char *idata = stbi_load( resourcePath(imagename), &width, &height, &channels, force_channels );
+    if( idata == NULL ) {
+      fprintf(stderr, "[IMG_Load] Failed to get raw data from the file %s - image not supported or not an image (%s).\n", 
+	      imagename, stbi_failure_reason());
+        return NULL;
+    }
+
+#if SDL_BYTEORDER == SDL_LIL_ENDIAN /* OpenGL RGBA masks */
+	uint32_t Rmask = 0x000000FF;
+	uint32_t Gmask = 0x0000FF00;
+	uint32_t Bmask = 0x00FF0000;
+#else
+	uint32_t Rmask = 0x00FF0000;
+	uint32_t Gmask = 0x0000FF00;
+	uint32_t Bmask = 0x000000FF;
+#endif
+    uint32_t Amask = (channels == 3)?0x00000000:0xFF000000;
+
+	if((image = SDL_CreateRGBSurfaceFrom(idata, width, height, 8*channels, width*channels, Rmask, Gmask, Bmask, Amask))) {
+		image->flags &= ~SDL_PREALLOC; // let the SDL handle the pixels
+        return image;
+    }
+
+	printf("[IMG_Load] Unsupported image format of: %s", imagename);
+	return NULL;
+}
 
 GLuint load_texture(char * aFilename, int clamp)
 {
@@ -637,7 +729,7 @@ int imgui_textfield(int id, ACFont &font, int x, int y, int w, int h, char *buff
 	if (gUIState.kbditem == 0)
 		gUIState.kbditem = id;
 
-    drawrect(x,y,w,h,base);
+	drawrect(x,y,w,h,base);
 	// Render the text field
 	if (gUIState.activeitem == id || gUIState.hotitem == id || gUIState.kbditem == id)
 	{

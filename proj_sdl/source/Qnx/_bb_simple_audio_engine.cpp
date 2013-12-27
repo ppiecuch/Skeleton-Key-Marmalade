@@ -34,6 +34,7 @@ THE SOFTWARE.
 #include <AL/alut.h>
 #include <mm/renderer.h>
 #include <bps/soundplayer.h>
+#include <vorbis/vorbisfile.h>
 
 #include <map>
 #include <string>
@@ -63,19 +64,52 @@ typedef enum {
 
 static int	 s_audioOid;
 
-static float s_volume 				  = 1.0f;
-static float s_effectVolume			  = 1.0f;
-static bool s_isBackgroundInitialized = false;
-static bool s_hasMMRError			  = false;
-static playStatus s_playStatus	  	  = STOPPED;
+static float s_volume                             = 1.0f;
+static float s_effectVolume                       = 1.0f;
+static bool s_isBackgroundInitialized             = false;
+static bool s_hasMMRError                         = false;
+static playStatus s_playStatus                    = STOPPED;
 
-static std::string 		   s_currentBackgroundStr;
-static mmr_connection_t   *s_mmrConnection 	  = 0;
-static mmr_context_t 	  *s_mmrContext 	  = 0;
-static strm_dict_t 		  *s_repeatDictionary = 0;
-static strm_dict_t 		  *s_volumeDictionary = 0;
+static std::string s_currentBackgroundStr;
+static mmr_connection_t *s_mmrConnection          = 0;
+static mmr_context_t *s_mmrContext                = 0;
+static strm_dict_t *s_repeatDictionary            = 0;
+static strm_dict_t *s_volumeDictionary            = 0;
 
 static SimpleAudioEngine  *s_engine = 0;
+
+static int checkALError(const char *funcName)
+{
+  int err = alGetError();
+    
+  if (err != AL_NO_ERROR)
+  {
+    switch (err)
+    {
+    case AL_INVALID_NAME:
+      fprintf(stderr, "AL_INVALID_NAME in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_ENUM:
+      fprintf(stderr, "AL_INVALID_ENUM in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_VALUE:
+      fprintf(stderr, "AL_INVALID_VALUE in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_OPERATION:
+      fprintf(stderr, "AL_INVALID_OPERATION in %s\n", funcName);
+      break;
+	    
+    case AL_OUT_OF_MEMORY:
+      fprintf(stderr, "AL_OUT_OF_MEMORY in %s\n", funcName);
+      break;
+    }
+  }
+  
+  return err;
+}
 
 static void printALError(int err)
 {
@@ -115,6 +149,98 @@ static void mmrerror(mmr_context_t *ctxt, const char *msg)
 
 	fprintf(stderr, "%s: error %d \n", msg, errcode);
 	s_hasMMRError = true;
+}
+
+//
+// OGG support
+//
+static bool isOGGFile(const char *pszFilePath)
+{
+  FILE *file;
+  OggVorbis_File ogg_file;
+  int result;
+
+  file = fopen(pszFilePath, "rb");
+  result = ov_test(file, &ogg_file, 0, 0);
+  ov_clear(&ogg_file);
+
+  return (result == 0);
+}
+
+static ALuint createBufferFromOGG(const char *pszFilePath)
+{
+  ALuint buffer;
+  OggVorbis_File ogg_file;
+  vorbis_info* info;
+  ALenum format;
+  int result;
+  int section;
+  unsigned int size = 0;
+
+  if (ov_fopen(pszFilePath, &ogg_file) < 0)
+    {
+      ov_clear(&ogg_file);
+      fprintf(stderr, "Could not open OGG file %s\n", pszFilePath);
+      return -1;
+    }
+
+  info = ov_info(&ogg_file, -1);
+
+  if (info->channels == 1)
+    format = AL_FORMAT_MONO16;
+  else
+    format = AL_FORMAT_STEREO16;
+
+  // size = #samples * #channels * 2 (for 16 bit)
+  unsigned int data_size = ov_pcm_total(&ogg_file, -1) * info->channels * 2;
+  char* data = new char[data_size];
+
+  while (size < data_size)
+    {
+      result = ov_read(&ogg_file, data + size, data_size - size, 0, 2, 1, &section);
+      if (result > 0)
+	{
+	  size += result;
+	}
+      else if (result < 0)
+	{
+	  delete [] data;
+	  fprintf(stderr, "OGG file problem %s\n", pszFilePath);
+	  return -1;
+	}
+      else
+	{
+	  break;
+	}
+    }
+
+  if (size == 0)
+    {
+      delete [] data;
+      fprintf(stderr, "Unable to read OGG data\n");
+      return -1;
+    }
+
+  // clear al errors
+  checkALError("createBufferFromOGG");
+
+  // Load audio data into a buffer.
+  alGenBuffers(1, &buffer);
+
+  if (checkALError("createBufferFromOGG") != AL_NO_ERROR)
+    {
+      fprintf(stderr, "Couldn't generate a buffer for OGG file\n");
+      delete [] data;
+      return buffer;
+    }
+
+  alBufferData(buffer, format, data, data_size, info->rate);
+  checkALError("createBufferFromOGG");
+  
+  delete [] data;
+  ov_clear(&ogg_file);
+
+  return buffer;
 }
 
 static void stopBackground(bool bReleaseData)
@@ -395,7 +521,12 @@ void SimpleAudioEngine::setEffectsVolume(float volume)
 	}
 }
 
-unsigned int SimpleAudioEngine::playEffect(const char* pszFilePath, char* pszKey, bool bLoop)
+unsigned int SimpleAudioEngine::playEffect(const char* pszFilePath, bool bLoop)
+{
+  return playEffect(pszFilePath, NULL, bLoop);
+}
+
+unsigned int SimpleAudioEngine::playEffect(const char* pszFilePath, const char* pszKey, bool bLoop)
 {
   if (!pszKey)
     pszKey = const_cast<char*>(pszFilePath);
@@ -426,7 +557,31 @@ void SimpleAudioEngine::stopEffect(unsigned int nSoundId)
   alSourceStop(nSoundId);
 }
 
-void SimpleAudioEngine::preloadEffect(const char* pszFilePath, char* pszKey)
+bool SimpleAudioEngine::isEffectPlaying(const char* pszKey) {
+  EffectsMap::iterator iter = s_effects.find(pszKey);
+  
+  if (iter == s_effects.end())
+    {
+      fprintf(stderr, "could not find play sound %s\n", pszKey);
+      return false;
+    }
+
+  ALint sourceState;
+  alGetSourcei(iter->second->source, AL_SOURCE_STATE, &sourceState);
+  return sourceState == AL_PLAYING;
+}
+
+bool SimpleAudioEngine::isEffectPlaying() {
+  EffectsMap::iterator iter; for(iter = s_effects.begin(); iter != s_effects.end(); ++iter ) {
+      ALint sourceState;
+      alGetSourcei(iter->second->source, AL_SOURCE_STATE, &sourceState);
+      if (sourceState == AL_PLAYING)
+	return true;
+  }
+  return false;
+}
+
+void SimpleAudioEngine::preloadEffect(const char* pszFilePath, const char* pszKey)
 {
 	if (!pszKey)
 		pszKey = const_cast<char*>(pszFilePath);
@@ -508,10 +663,10 @@ extern "C" {
 		audio::SimpleAudioEngine::sharedEngine()->preloadEffect( snd, itokey(key) );
 	}
 	void sndPlaySound(const char *snd) {
-		audio::SimpleAudioEngine::sharedEngine()->playEffect( snd, NO );
+		audio::SimpleAudioEngine::sharedEngine()->playEffect( snd, false );
 	}
 	void sndPlaySoundWithKey(const int key) {
-		audio::SimpleAudioEngine::sharedEngine()->playEffect( itokey(key), NO );
+		audio::SimpleAudioEngine::sharedEngine()->playEffect( itokey(key), false );
 	}
 	void sndStopSoundWithKey(const int key) {
 		audio::EffectsMap::iterator iter = audio::s_effects.find( itokey(key) );
@@ -535,10 +690,10 @@ extern "C" {
 		audio::SimpleAudioEngine::sharedEngine()->preloadBackgroundMusic( snd, itokey(key) );
 	}
 	void sndPlayMusic(const char *snd) {
-		audio::SimpleAudioEngine::sharedEngine()->playBackgroundMusic( snd, YES );
+		audio::SimpleAudioEngine::sharedEngine()->playBackgroundMusic( snd, true );
 	}
 	void sndPlayMusicWithKey(const int key) {
-		audio::SimpleAudioEngine::sharedEngine()->playBackgroundMusic( itokey(key), YES );
+		audio::SimpleAudioEngine::sharedEngine()->playBackgroundMusic( itokey(key), true );
 	}
 	void sndMusicStop() {
 	}

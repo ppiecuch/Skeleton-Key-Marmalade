@@ -205,8 +205,9 @@ if(NOT SDL_FOUND)
 
 # game files:
 set( LOCAL_SOURCE_ROOT ${PROJECT_SOURCE_DIR}/source )
+set( DATA_ROOT ${PROJECT_SOURCE_DIR}/../data )
 set( SOURCE_ROOT ${PROJECT_SOURCE_DIR}/../source )
-set(SkeletonKey_Src_Files
+set( SkeletonKey_Src_Files
 	## (source)
 	${SOURCE_ROOT}/main.cpp
 	${SOURCE_ROOT}/config.h
@@ -267,6 +268,10 @@ set(SkeletonKey_Src_Files
     	${SOURCE_ROOT}/sqlite3/sqlite3ext.h
     	${SOURCE_ROOT}/sqlite3/sqlite3.c
 	## (compat)
+    	${LOCAL_SOURCE_ROOT}/compat/IwGx.h
+    	${LOCAL_SOURCE_ROOT}/compat/Iw2D.h
+    	${LOCAL_SOURCE_ROOT}/compat/IwResManager.h
+    	${LOCAL_SOURCE_ROOT}/compat/s3e.h
     	${LOCAL_SOURCE_ROOT}/compat/s3e.cpp
 	${LOCAL_SOURCE_ROOT}/stb/image_DXT.h
 	${LOCAL_SOURCE_ROOT}/stb/image_DXT.c
@@ -276,6 +281,13 @@ set(SkeletonKey_Src_Files
 	${LOCAL_SOURCE_ROOT}/stb/stb_image_aug.c
 	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS.h
 	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS_aug_c.h
+	${LOCAL_SOURCE_ROOT}/AngelcodeFont.cpp
+	${LOCAL_SOURCE_ROOT}/FPSLimit.cpp
+	${LOCAL_SOURCE_ROOT}/SDLGLFont.cpp
+	${LOCAL_SOURCE_ROOT}/toolkit.cpp
+	${LOCAL_SOURCE_ROOT}/BMF_font.cpp
+	${LOCAL_SOURCE_ROOT}/MersenneTwister.cpp
+	${LOCAL_SOURCE_ROOT}/SDLGLTexture.cpp
 )
 
 # platform dependant game files:
@@ -328,7 +340,8 @@ include_directories(
 	${LOCAL_SOURCE_ROOT}/compat/
 	${LOCAL_SOURCE_ROOT}/stb/
 	${LOCAL_SOURCE_ROOT}/Qnx
-	${SOURCE_ROOT}/source
+	${SOURCE_ROOT}
+	${DATA_ROOT}
 )
 link_directories(
 	${SDL_LIB_DIR}

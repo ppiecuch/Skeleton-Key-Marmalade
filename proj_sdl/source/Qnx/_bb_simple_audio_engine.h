@@ -128,7 +128,8 @@ public:
     @param pszFilePath The path of the effect file,or the FileName of T_SoundResInfo
 	@bLoop Whether to loop the effect playing, default value is false
     */
-    unsigned int playEffect(const char* pszFilePath, char* pszKey = NULL, bool bLoop = false);
+    unsigned int playEffect(const char* pszFilePath, const char* pszKey = NULL, bool bLoop = false);
+    unsigned int playEffect(const char* pszFilePath, bool bLoop = false);
 
     /**
     @brief Stop playing sound effect
@@ -137,11 +138,22 @@ public:
     void stopEffect(unsigned int nSoundId);
 
     /**
+    @brief Check if given sound effect is playing.
+    @param pszKey The key of sound effect.
+    */
+    bool isEffectPlaying(const char* pszKey);
+
+    /**
+    @brief Check if any sound effect is playing.
+    */
+    bool isEffectPlaying();
+
+    /**
     @brief  		preload a compressed audio file
     @details	    the compressed audio will be decode to wave, then write into an 
     internal buffer in SimpleaudioEngine
     */
-    void preloadEffect(const char* pszFilePath, char* pszKey = NULL);
+    void preloadEffect(const char* pszFilePath, const char* pszKey = NULL);
 
     /**
     @brief  		unload the preloaded effect from internal buffer

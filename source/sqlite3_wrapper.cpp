@@ -1,4 +1,5 @@
 #include "sqlite3_wrapper.h"
+#include <stdio.h>
 
 SQLite3Wrapper::SQLite3Wrapper(std::string tablename) {
 	zErrMsg = 0;

@@ -23,8 +23,9 @@ enum CIw2DFontAlign
     IW_2D_FONT_ALIGN_RIGHT,
 };
 
-class CIw2DFont
-{
+class CIw2DFont {
+ public:
+    virtual ~CIw2DFont();
 };
 
 inline static void Iw2DInit() { }

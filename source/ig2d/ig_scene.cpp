@@ -21,8 +21,7 @@ void IGScene::unloadResources() {
 
 void IGScene::display() {
 	// clear the screen
-	Iw2DSetColour(IGDistorter::getInstance()->colorBlackInt);
-	Iw2DFillRect(CIwSVec2(0,0), CIwSVec2(Iw2DGetSurfaceWidth(), Iw2DGetSurfaceHeight()));
+	Iw2DClearScreen(IGDistorter::getInstance()->colorBlackInt);
 
 	// display all the children
 	IGNode::display();

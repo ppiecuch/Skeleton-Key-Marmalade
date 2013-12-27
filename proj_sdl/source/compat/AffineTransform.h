@@ -4,10 +4,10 @@
 
 namespace scalar
 {
-    float sin(float a) { return ::sinf(a); }
-    double sin(double a) { return ::sin(a); }
-    float cos(float a) { return ::cosf(a); }
-    double cos(double a) { return ::cos(a); }
+    inline static float sin(float a) { return ::sinf(a); }
+    inline static double sin(double a) { return ::sin(a); }
+    inline static float cos(float a) { return ::cosf(a); }
+    inline static double cos(double a) { return ::cos(a); }
 }
 
 namespace affinetransform

@@ -3,6 +3,8 @@
 #include "sounds.h"
 #include "settings.h"
 #include "game_data.h"
+#include <s3eSound.h>
+#include <s3eAudio.h>
 #include <s3eIOSBackgroundMusic.h>
 #include <s3eIOSBackgroundAudio.h>
 
@@ -119,6 +121,7 @@ void Sounds::unloadSounds() {
 Sounds::Sound* Sounds::loadSound(const char* filename) {
 	Sounds::Sound* sound = new Sounds::Sound();
 	s3eFile *fileHandle = s3eFileOpen(filename, "rb");
+	strcpy(sound->fileName, filename);
 	sound->fileSize = s3eFileGetSize(fileHandle);
 	sound->buffer = (int16*)s3eMallocBase(sound->fileSize);
 	memset(sound->buffer, 0, sound->fileSize);
@@ -139,11 +142,11 @@ void Sounds::playSound(Sounds::Sound* sound) {
 }
 
 // play sounds
-void Sounds::playKeyMove()		{ playSound(soundKeyMove); }
+void Sounds::playKeyMove()	{ playSound(soundKeyMove); }
 void Sounds::playOpenChest()	{ playSound(soundOpenChest); }
 void Sounds::playRestartLevel()	{ playSound(soundRestartLevel); }
-void Sounds::playDoor()			{ playSound(soundDoor); }
-void Sounds::playClick()		{ playSound(soundClick); }
+void Sounds::playDoor()		{ playSound(soundDoor); }
+void Sounds::playClick()	{ playSound(soundClick); }
 void Sounds::playMapLocked()	{ playSound(soundMapLocked); }
 void Sounds::playUnlockAchievement() { playSound(soundUnlockAchievement); }
 

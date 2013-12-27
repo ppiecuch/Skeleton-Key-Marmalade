@@ -21,13 +21,17 @@
 */
 
 #include "BMF_font.h"
-#include "GLState.h"
-#include "CGCompat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+
+#if defined __QNXNTO__ || defined ANDROID
+# ifndef OPENGLES
+#  define OPENGLES
+# endif
+#endif
 
 #ifndef GL_TEXTURE_BIT
 	#define glPushAttrib(_b_)
@@ -51,6 +55,12 @@ typedef struct BMF_FontMetrics {
 
 #pragma pack(pop)
 
+struct CGPoint {
+  float x;
+  float y;
+};
+
+inline static CGPoint CGPointMake(float x, float y) { return (CGPoint){x, y}; }
 
 struct BMF_Font {
 	GLuint texture_id;
@@ -337,20 +347,21 @@ void BMF_Begin(BMF_Font* font) {
 				 GL_CURRENT_BIT | GL_TEXTURE_BIT | GL_LIST_BIT | GL_DEPTH_BUFFER_BIT);
 
 	/* make the required GL settings */
-	GLboolean blend_s = glmEnable(GL_BLEND);
-	GLenum blend_func_s = glmBlendFunc(OPENGL_MATERIAL_COLOR);
+	GLboolean blend_s = glEnable(GL_BLEND);
+	
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-	GLboolean texture_s = glmEnable(GL_TEXTURE_2D);
+	GLboolean texture_s = glEnable(GL_TEXTURE_2D);
 
-	GLboolean light_s = glmDisable(GL_LIGHTING);
-	GLboolean depth_s = glmDisable(GL_DEPTH_TEST);
+	GLboolean light_s = glDisable(GL_LIGHTING);
+	GLboolean depth_s = glDisable(GL_DEPTH_TEST);
 	glDepthMask(GL_FALSE);
 
 	/* Enable alpha testing so that the completely transparent parts of the font
 	 * will be discarded. This should improve rendering speed slightly. 
 	 */
-	GLboolean alpha_s = glmEnable(GL_ALPHA_TEST);
+	GLboolean alpha_s = glEnable(GL_ALPHA_TEST);
 	glAlphaFunc(GL_GREATER, 0.0f);
 
 	/* use the texture id and the fonts display list base */
@@ -361,12 +372,11 @@ void BMF_Begin(BMF_Font* font) {
 	#endif
 	}
 	
-	if (alpha_s) glmDisable(GL_ALPHA_TEST);
-	if (depth_s) glmEnable(GL_DEPTH_TEST);
-	if (light_s) glmEnable(GL_LIGHTING);
-	if (texture_s) glmDisable(GL_TEXTURE_2D);
-	if (blend_func_s) glmBlendFunc(blend_func_s);
-	if (blend_s) glmDisable(GL_BLEND);
+	if (alpha_s) glDisable(GL_ALPHA_TEST);
+	if (depth_s) glEnable(GL_DEPTH_TEST);
+	if (light_s) glEnable(GL_LIGHTING);
+	if (texture_s) glDisable(GL_TEXTURE_2D);
+	if (blend_s) glDisable(GL_BLEND);
 }
 
 /******************************************************************************/

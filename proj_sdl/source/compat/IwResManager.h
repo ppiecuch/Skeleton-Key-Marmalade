@@ -1,7 +1,9 @@
 #ifndef __compat_iwresmanager_h__
 #define __compat_iwresmanager_h__
 
-inline static void IwResManagerInit() { }
+#include <stdio.h>
+
+void IwResManagerInit();
 inline static void IwResManagerTerminate() { }
 
 struct CIwResGroup
