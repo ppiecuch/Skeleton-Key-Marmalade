@@ -7,4 +7,4 @@
 #define NC_VERSION "1.1.0"
 #define NC_BUILDVERSION "1.2.3.3130"
 #define NC_BUILDTIME "13/12/2013 18:18"
-#define NC_SOURCE_REV 0xf8d57b9
+#define NC_SOURCE_REV 0x3914b7a

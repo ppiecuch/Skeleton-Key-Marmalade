@@ -340,6 +340,7 @@ include_directories(
 	${LOCAL_SOURCE_ROOT}/compat/
 	${LOCAL_SOURCE_ROOT}/stb/
 	${LOCAL_SOURCE_ROOT}/Qnx
+	${LOCAL_SOURCE_ROOT}
 	${SOURCE_ROOT}
 	${DATA_ROOT}
 )

@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stddef.h>
+#include "toolkit.h"
+#include "foreach_.h"
 #include "utf8.h"
 
 #if defined __QNXNTO__
@@ -160,23 +162,65 @@ void s3eSoundSetInt(s3eEnum f, int v) {
 
 // -----  IwResManager -----
 
-class CcIw2DFont : public CIwGxFont, public CIw2DFont
+class CcIw2DFont : public CIw2DFont
 {
+  int num;
+  uint16 asciimap[256];
+  map<uint, uint16> utf8map;
+  const CIwGxFont &descr;
+  uint texture;
+public:
+  CcIw2DFont(const CIwGxFont &font) : texture(0), num(0), descr(font)
+  {
+    string line = font.charmap;
+    // process utf8 characters
+    const string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
+    if (end_it != line.end()) {
+      fprintf( stderr, "[CcIw2DFont] Invalid UTF-8 encoding detected.\n" );
+      fprintf( stderr, "[CcIw2DFont] This part is fine and will be processed: %s.\n", string(line.begin(), end_it).c_str() );
+    }
+    utf8::iterator<string::iterator> it (line.begin(), line.begin(), end_it);
+    int index = 0; while(it.base()!=end_it) {
+      uint32_t ch = *it;
+      if (ch < 256)
+	asciimap[ch] = index;
+      else
+	utf8map[ch] = index;
+      ++index; ++it; // next character
+      printf("Character map created for %s with %d characters.\n", font.image, index);
+    }
+
+    num = index;
+
+    int width, height, channels;
+    const int force_channels = 0;
+
+    // try to read raw data:
+    const char * path = resourcePath(font.image);
+    unsigned char *idata = stbi_load( path, &width, &height, &channels, force_channels );
+    if( idata == NULL ) {
+      fprintf(stderr, "[CcIw2DFont] Failed to get raw data from the file %s - image not supported or not an image (%s).\n", 
+	      path, stbi_failure_reason());
+      return;
+    }
+    // create texture:
+  }
 };
 
-static map<string, const CIwGxFont*> _fonts;
+static map<string, CcIw2DFont*> _fonts;
 static CcIw2DFont *_current_font;
 static uint32 _current_color;
+static CIwMat2D _current_matrix;
 
 void IwResManagerInit()
 {
-  _fonts["font_algerian_16"] = &font_algerian_16;
-  _fonts["font_algerian_20"] = &font_algerian_20;
-  _fonts["font_algerian_24"] = &font_algerian_24;
-  _fonts["font_deutsch_26"] = &font_deutsch_26;
-  _fonts["font_gabriola_14"] = &font_gabriola_14;
-  _fonts["font_gabriola_16b"] = &font_gabriola_16b;
-  _fonts["font_gabriola_22b"] = &font_gabriola_22b;
+  _fonts["font_algerian_16"] = new CcIw2DFont(font_algerian_16);
+  _fonts["font_algerian_20"] = new CcIw2DFont(font_algerian_20);
+  _fonts["font_algerian_24"] = new CcIw2DFont(font_algerian_24);
+  _fonts["font_deutsch_26"] = new CcIw2DFont(font_deutsch_26);
+  _fonts["font_gabriola_14"] = new CcIw2DFont(font_gabriola_14);
+  _fonts["font_gabriola_16b"] = new CcIw2DFont(font_gabriola_16b);
+  _fonts["font_gabriola_22b"] = new CcIw2DFont(font_gabriola_22b);
 }
 
 // ----- Iw2D -----
@@ -207,10 +251,28 @@ public:
   virtual float GetWidth() { return size.x; }
   virtual float GetHeight()  { return size.y; }
 
-  virtual ~CcIw2DImage() {};
+  virtual ~CcIw2DImage() {}
   // --
   const char *GetErrorString() { error.empty()?NULL:error.c_str(); }
 };
+
+CIw2DImage* Iw2DCreateImageResource(const char* resource)
+{
+  const char *path = resourcePath(resource);
+  if (path)
+    return new CcIw2DImage(path);
+  else
+    return NULL;
+}
+
+CIw2DFont* Iw2DCreateFontResource(const char* resource)
+{
+  if (_fonts.count(resource)) {
+    return _fonts[resource];
+  }
+  fprintf(stderr, "*** Font resource %s not found.\n", resource);
+  return NULL;
+}
 
 uint32 Iw2DGetSurfaceHeight() {
   #if defined __BB10__
@@ -231,12 +293,81 @@ uint32 Iw2DGetSurfaceWidth() {
   #endif
 }
 
+void Iw2DSetTransformMatrix(const CIwMat2D &m) {
+  _current_matrix = m;
+}
+
 void Iw2DSetFont(const CIw2DFont *f) {
   _current_font = (CcIw2DFont*)f;
 }
 
 void Iw2DSetColour(const uint32 color) {
   _current_color = color;
+}
+
+void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign) {
+
+  float x = topLeft.x;
+  float y = topLeft.y;
+  const float w = 0;
+  const float h = 0;
+  float uofs = 0;
+  float vofs = 0;
+  const float uwid = 0;
+  const float vwid = 0;
+
+  string line = text;
+
+  const string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
+  if (end_it != line.end()) {
+    fprintf( stderr, "[Iw2DDrawString] Invalid UTF-8 encoding detected.\n" );
+    fprintf( stderr, "[Iw2DDrawString] This part is fine and will be processed: %s.\n", string(line.begin(), end_it).c_str() );
+  }
+  utf8::iterator<string::iterator> it (line.begin(), line.begin(), end_it);
+  int index = 0; while(it.base()!=end_it) {
+    uint32_t ch = *it;
+    struct _v2c4 {
+      GLfloat v[2];
+      GLfloat t[2];
+      uint32_t c;
+    } vertices[] = {
+      { {x, y}, {uofs, vofs}, _current_color },
+      { {x,y+h}, {uofs, vofs + vwid}, _current_color },
+      { {x+w,y}, {uofs + uwid, vofs}, _current_color },
+      { {x+w,y+h}, {uofs + uwid, vofs + vwid}, _current_color },
+    };
+    glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
+    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  }
+}
+
+void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
+
+  const float x = topLeft.x;
+  const float y = topLeft.y;
+  const float w = size.x;
+  const float h = size.y;
+  float uofs = 0;
+  float vofs = 0;
+  const float uwid = 1;
+  const float vwid = 1;
+
+  struct _v2c4 {
+    GLfloat v[2];
+    GLfloat t[2];
+    uint32_t c;
+  } vertices[] = {
+    { {x, y}, {uofs, vofs}, _current_color },
+    { {x,y+h}, {uofs, vofs + vwid}, _current_color },
+    { {x+w,y}, {uofs + uwid, vofs}, _current_color },
+    { {x+w,y+h}, {uofs + uwid, vofs + vwid}, _current_color },
+  };
+  glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
+  glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
 }
 
 void Iw2DClearScreen(const uint32 color) {

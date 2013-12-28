@@ -9,9 +9,8 @@
 class CIw2DImage
 {
  public:
-    virtual float GetWidth();
-    virtual float GetHeight();
-    virtual ~CIw2DImage();
+    virtual float GetWidth() = 0;
+    virtual float GetHeight() = 0;
 };
 
 enum CIw2DFontAlign
@@ -24,8 +23,7 @@ enum CIw2DFontAlign
 };
 
 class CIw2DFont {
- public:
-    virtual ~CIw2DFont();
+  // --
 };
 
 inline static void Iw2DInit() { }
@@ -36,7 +34,7 @@ void Iw2DFinishDrawing();
 uint32 Iw2DGetSurfaceHeight();
 uint32 Iw2DGetSurfaceWidth();
 void Iw2DSetTransformMatrix(const CIwMat2D &m);
-void Iw2DDrawString(const char* string, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign);
+void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign);
 void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size);
 void Iw2DSetFont(const CIw2DFont *f);
 void Iw2DSetColour(const uint32 color);
