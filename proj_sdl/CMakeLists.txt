@@ -19,11 +19,11 @@ endif(COMMAND CMAKE_POLICY)
 
 project(SkeletonKey)
 
-set(NC_DIST_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
-set(NC_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${NC_OUTPUT_DIRECTORY})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${NC_OUTPUT_DIRECTORY})
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${NC_OUTPUT_DIRECTORY})
+set(SK_DIST_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
+set(SK_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${SK_OUTPUT_DIRECTORY})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${SK_OUTPUT_DIRECTORY})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${SK_OUTPUT_DIRECTORY})
 
 #Parse version information
 #Using system commands: grep, cut, sed, date, bash
@@ -33,18 +33,18 @@ MACRO(BuildInfo_Get_Version file defname variable)
 			    OUTPUT_VARIABLE ${variable} OUTPUT_STRIP_TRAILING_WHITESPACE)
 ENDMACRO(BuildInfo_Get_Version)
  
-set(BUILD_INFO "./build_info.h")
-BuildInfo_Get_Version(${BUILD_INFO} NC_MAJOR PROJECT_VER_MAJOR)
-BuildInfo_Get_Version(${BUILD_INFO} NC_MINOR PROJECT_VER_MINOR)
-BuildInfo_Get_Version(${BUILD_INFO} NC_REVISION PROJECT_VER_REVISION)
-if (PROJECT_VER_MAJOR AND PROJECT_VER_MINOR AND PROJECT_VER_REVISION)
+set( BUILD_INFO "build_info.h" )
+BuildInfo_Get_Version(${BUILD_INFO} SK_MAJOR PROJECT_VER_MAJOR)
+BuildInfo_Get_Version(${BUILD_INFO} SK_MINOR PROJECT_VER_MINOR)
+BuildInfo_Get_Version(${BUILD_INFO} SK_REVISION PROJECT_VER_REVISION)
+if (NOT (PROJECT_VER_MAJOR LESS 0) AND NOT (PROJECT_VER_MINOR LESS 0) AND NOT (PROJECT_VER_REVISION LESS 0))
    EXECUTE_PROCESS(COMMAND date +"%y/%m/%Y %H:%M" OUTPUT_VARIABLE TT OUTPUT_STRIP_TRAILING_WHITESPACE)
    #Simple escape string
    STRING(REPLACE "/" "\\/" TT_ ${TT})
-   EXECUTE_PROCESS(COMMAND sed -i "" "s/NC_BUILDTIME \".*\"/NC_BUILDTIME ${TT_}/" ${BUILD_INFO})
+   EXECUTE_PROCESS(COMMAND sed -i "" "s/SK_BUILDTIME \".*\"/SK_BUILDTIME ${TT_}/" ${BUILD_INFO})
    EXECUTE_PROCESS(COMMAND bash -c "echo $((`date +%y%m`+`date +%H%M|sed s/^0*//`))" OUTPUT_VARIABLE BUILD_ID OUTPUT_STRIP_TRAILING_WHITESPACE)
    set(BUILD_VER "${PROJECT_VER_MAJOR}.${PROJECT_VER_MINOR}.${PROJECT_VER_REVISION}")
-   EXECUTE_PROCESS(COMMAND sed -i "" "s/NC_BUILDVERSION \".*\"/NC_BUILDVERSION \"${BUILD_VER}.${BUILD_ID}\"/" ${BUILD_INFO})
+   EXECUTE_PROCESS(COMMAND sed -i "" "s/SK_BUILDVERSION \".*\"/SK_BUILDVERSION \"${BUILD_VER}.${BUILD_ID}\"/" ${BUILD_INFO})
    message("** Project build version: ${BUILD_VER} (${BUILD_ID})")
    message("** Project build timestmap: ${TT}")
 endif ()
@@ -80,14 +80,14 @@ IF( IS_GIT )
   IF ( GIT_EXECUTABLE )
      Git_GET_REVISION( ../source ProjectRevision )
      IF ( ProjectRevision )
-     	EXECUTE_PROCESS(COMMAND sed -i "" "s/NC_SOURCE_REV [x0-9a-f]*/NC_SOURCE_REV 0x${ProjectRevision}/" ${BUILD_INFO})
+     	EXECUTE_PROCESS(COMMAND sed -i "" "s/SK_SOURCE_REV [x0-9a-f]*/SK_SOURCE_REV 0x${ProjectRevision}/" ${BUILD_INFO})
    	MESSAGE("** Git source revision is ${ProjectRevision}")
      ENDIF ( ProjectRevision )
   ENDIF( GIT_EXECUTABLE )
 ELSEIF ( SVN_EXECUTABLE )
  Subversion_GET_REVISION( ../source ProjectRevision )
  IF ( ProjectRevision )
-   EXECUTE_PROCESS(COMMAND sed -i "" "s/NC_SOURCE_REV [0-9]*/NC_SOURCE_REV ${ProjectRevision}/" ${BUILD_INFO})
+   EXECUTE_PROCESS(COMMAND sed -i "" "s/SK_SOURCE_REV [0-9]*/SK_SOURCE_REV ${ProjectRevision}/" ${BUILD_INFO})
    MESSAGE("** SVN source revision is ${ProjectRevision}")
  ENDIF ( ProjectRevision )
 ENDIF( IS_GIT )
@@ -350,7 +350,7 @@ link_directories(
 
 #Main resource files:
 SET( DATA_ROOT ../data )
-SET(SkeleteonKey_Data_Files
+SET(SkeletonKey_Data_Files
 	graphics/achievements/achievements_back.png
 	graphics/achievements/achievements_back2.png
 	graphics/achievements/achievements_header.png
@@ -547,11 +547,11 @@ SET(SkeleteonKey_Data_Files
 	graphics/select_level/select_level_ship.png
 )
 SET_SOURCE_FILES_PROPERTIES(
-	${SkeleteonKey_Data_Files}
+	${SkeletonKey_Data_Files}
 	PROPERTIES TARGET_PATH "./data"
 )
 SET_SOURCE_FILES_PROPERTIES(
-	${SkeleteonKey_Data_Files}
+	${SkeletonKey_Data_Files}
 	PROPERTIES ROOT_PATH "../data"
 )
 #SDL fonts:
@@ -671,30 +671,30 @@ if (NC_BUILD_PLATFORM_QNX)
 		ENDIF()
 	ENDIF()
 	if (${filename} STREQUAL "bar-descriptor.xml")
-	   ADD_CUSTOM_COMMAND(OUTPUT ${NC_DIST_DIRECTORY}/${path}/${filename}
-		COMMAND ${CMAKE_COMMAND} -E copy "${root}/${file}" "${NC_DIST_DIRECTORY}/${path}/${filename}"
-		COMMAND sed -i \"\" \"s/%VER_NUMBER%/${BUILD_VER}/\" \"${NC_DIST_DIRECTORY}/${path}/${filename}\"
-		COMMAND sed -i \"\" \"s/%VER_LABEL%/${BUILD_VER}/\" \"${NC_DIST_DIRECTORY}/${path}/${filename}\"
-		COMMAND sed -i \"\" \"s/%REQ_PLATF_VER%/${REQ_PLATF_VER}/\" \"${NC_DIST_DIRECTORY}/${path}/${filename}\"
-		COMMAND sed -i \"\" \"s/%BUILD_ID%/${BUILD_ID}/\" \"${NC_DIST_DIRECTORY}/${path}/${filename}\"
+	   ADD_CUSTOM_COMMAND(OUTPUT ${SK_DIST_DIRECTORY}/${path}/${filename}
+		COMMAND ${CMAKE_COMMAND} -E copy "${root}/${file}" "${SK_DIST_DIRECTORY}/${path}/${filename}"
+		COMMAND sed -i \"\" \"s/%VER_NUMBER%/${BUILD_VER}/\" \"${SK_DIST_DIRECTORY}/${path}/${filename}\"
+		COMMAND sed -i \"\" \"s/%VER_LABEL%/${BUILD_VER}/\" \"${SK_DIST_DIRECTORY}/${path}/${filename}\"
+		COMMAND sed -i \"\" \"s/%REQ_PLATF_VER%/${REQ_PLATF_VER}/\" \"${SK_DIST_DIRECTORY}/${path}/${filename}\"
+		COMMAND sed -i \"\" \"s/%BUILD_ID%/${BUILD_ID}/\" \"${SK_DIST_DIRECTORY}/${path}/${filename}\"
 		MAIN_DEPENDENCY ${root}/${file}
 		COMMENT "Copying ${filename}"
 	   )
 	elseif(${ext} STREQUAL ".wav")
-	   ADD_CUSTOM_COMMAND(OUTPUT ${NC_DIST_DIRECTORY}/${path}/${dest}
-		COMMAND ${WAV_CONVERT} \"${root}/${file}\" \"${NC_DIST_DIRECTORY}/${path}/${dest}\"
+	   ADD_CUSTOM_COMMAND(OUTPUT ${SK_DIST_DIRECTORY}/${path}/${dest}
+		COMMAND ${WAV_CONVERT} \"${root}/${file}\" \"${SK_DIST_DIRECTORY}/${path}/${dest}\"
 		MAIN_DEPENDENCY ${root}/${file}
 		COMMENT "Converting wav file ${filename}"
 	   )
 	else()
-	   ADD_CUSTOM_COMMAND(OUTPUT ${NC_DIST_DIRECTORY}/${path}/${dest}
-		COMMAND ${CMAKE_COMMAND} -E copy "${root}/${file}" "${NC_DIST_DIRECTORY}/${path}/${dest}"
+	   ADD_CUSTOM_COMMAND(OUTPUT ${SK_DIST_DIRECTORY}/${path}/${dest}
+		COMMAND ${CMAKE_COMMAND} -E copy "${root}/${file}" "${SK_DIST_DIRECTORY}/${path}/${dest}"
 		MAIN_DEPENDENCY ${root}/${file}
 		COMMENT "Copying ${filename}"
 	   )
 	endif()
-	LIST( APPEND SkeletonKey_Src_PlatfFiles ${NC_DIST_DIRECTORY}/${path}/${dest} )
-	LIST( APPEND DIST_FILES ${NC_DIST_DIRECTORY}/${path}/${dest} )
+	LIST( APPEND SkeletonKey_Src_PlatfFiles ${SK_DIST_DIRECTORY}/${path}/${dest} )
+	LIST( APPEND DIST_FILES ${SK_DIST_DIRECTORY}/${path}/${dest} )
    ENDFOREACH()
  endif (NC_BUILD_PLATFORM_QNX)
 
@@ -720,7 +720,7 @@ elseif(APPLE)
     			${SkeletonKey_Src_PlatfFiles}
 			${SkeletonKey_Hdr_Files}
 			${libRocket_Src_Files} )
-endif()
+endif(NC_BUILD_PLATFORM_QNX)
     
 target_link_libraries( SkeletonKey ${SDL_LIBRARY} ${PLATF_LIBS})
 

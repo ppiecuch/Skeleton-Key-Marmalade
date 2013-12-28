@@ -203,7 +203,20 @@ public:
 	      path, stbi_failure_reason());
       return;
     }
+
     // create texture:
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    switch(channels) {
+    case 1: fprintf(stderr, "[CcIw2DFont] Unsupported 1 channel image: %s.\n", path); break;
+    case 2: fprintf(stderr, "[CcIw2DFont] Unsupported 2 channel image: %s.\n", path); break;
+    case 3: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, idata); break;
+    case 4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, idata); break;
+    }
   }
 };
 
@@ -231,8 +244,9 @@ private:
   CIwIVec2 size;
   std::string file;
   std::string error;
+  uint texture;
 public:
-  CcIw2DImage(const char* from_file) {
+  CcIw2DImage(const char* from_file) : texture(0) {
 
     file = from_file;
 
@@ -247,11 +261,29 @@ public:
       error = stbi_failure_reason();
       return;
     }
+
+    size.x = width;
+    size.y = height;
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+    switch(channels) {
+    case 1: fprintf(stderr, "[CcIw2DImage] Unsupported 1 channel image: %s.\n", from_file); break;
+    case 2: fprintf(stderr, "[CcIw2DImage] Unsupported 2 channel image: %s.\n", from_file); break;
+    case 3: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, idata); break;
+    case 4: glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, idata); break;
+    }
   }
   virtual float GetWidth() { return size.x; }
   virtual float GetHeight()  { return size.y; }
 
-  virtual ~CcIw2DImage() {}
+  virtual ~CcIw2DImage() {
+    if (texture) glDeleteTextures( 1, &texture );
+  }
   // --
   const char *GetErrorString() { error.empty()?NULL:error.c_str(); }
 };

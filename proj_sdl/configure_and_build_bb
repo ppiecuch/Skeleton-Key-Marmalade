@@ -105,7 +105,10 @@ else
 fi
 
 if [ -z "$BUILDTYPE" ] ; then
-    BUILDTYPE="Release"
+    BUILDTYPE=`grep CMAKE_BUILD_TYPE CMakeCache.txt | cut -f 2 -d=`
+    if [ -z "$BUILDTYPE" ] ; then
+	BUILDTYPE="Release"
+    fi
 fi
 
 echo "** Build type: $BUILDTYPE"

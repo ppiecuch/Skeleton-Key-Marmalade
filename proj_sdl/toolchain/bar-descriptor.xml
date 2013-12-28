@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <qnx xmlns="http://www.qnx.com/schemas/application/1.0">
-    <id>com.komsoft.neurocube</id>
-    <filename>NeuroCube</filename>
-    <name>NeuroCube</name>
+    <id>com.komsoft.skeletonkey</id>
+    <filename>SkeletonKey</filename>
+    <name>SkeletonKey</name>
     <author>KomSoft Oprogramowanie</author>
     <copyright>2013-2014 (c) KomSoft Oprogramowanie</copyright>
     <authorId>gYAAgJWWmDfer27CLcxm_P3mzK0</authorId>
@@ -25,23 +25,26 @@
     <category>core.games</category>
     <!--  The icon for the application, which should be 86x86/114x114. -->
     <icon>
-      <image>Icon86.png</image>
-      <image>Icon114.png</image>
+      <image>icon_86_p.png</image>
+      <image>icon_90_p.png</image>
+      <image>icon_114_p.png</image>
     </icon>
     <!--  The splash screen that will appear when your application is launching. Should be 1024x600. -->
     <splashscreens>
-      <image>splash1024x600.png</image>
+      <image>splash_playbook.jpg</image>
+      <image>splash_bb10.jpg</image>
     </splashscreens>
-    <splashscreen>splash1024x600.png</splashscreen>
-    <asset path="NeuroCube" entry="true">NeuroCube</asset>
-    <asset path="Icon86.png">Icon86.png</asset>
-    <asset path="Icon114.png">Icon114.png</asset>
-    <asset path="splash1024x600.png">splash1024x600.png</asset>
+    <asset path="SkeletonKey" entry="true">SkeletonKey</asset>
+    <asset path="icon_86_p.png">icon_86_p.png</asset>
+    <asset path="icon_90_p.png">icon_90_p.png</asset>
+    <asset path="icon_114_p.png">icon_114_p.png</asset>
+    <asset path="splash_playbook.jpg">splash_playbook.jpg</asset>
+    <asset path="splash_bb10.jpg">splash_bb10.jpg</asset>
     <!-- Ensure that shared libraries in the package are found at run-time. -->
     <env var="LD_LIBRARY_PATH" value="app/native/lib"/>
     <asset path="lib/libTouchControlOverlay.so.1" type="Qnx/Elf">lib/libTouchControlOverlay.so.1</asset>
     <asset path="lib/libSDL-1.2.so.12" type="Qnx/Elf">lib/libSDL-1.2.so.12</asset>
     <asset path="lib/libGLES_bc.so.1" type="Qnx/Elf">lib/libGLES_bc.so.1</asset>
-    <!-- NeuroCube data resources. -->
+    <!-- SkeletonKey data resources. -->
     <asset path="./data">data</asset>
 </qnx>
