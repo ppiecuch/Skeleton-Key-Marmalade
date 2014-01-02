@@ -1,0 +1,8 @@
+#!/bin/bash
+SDK=/Developer/SDKs/bbndk-2.1.0
+echo "*** Connect as: ssh -i id_rsa devuser@169.254.0.1"
+pw="1234"
+if [ ".$1" != "." ]; then
+	pw=$1
+fi
+$SDK/host/macosx/x86/usr/bin/blackberry-connect 169.254.0.1 -password $pw -sshPublicKey id_rsa.pub

@@ -1,0 +1,4 @@
+#!/bin/bash
+ssh -i id_rsa \
+  devuser@169.254.0.1 \
+  "cat ../1000/appdata/com.komsoft.skeletonkey.testDev_skeletonkey44020cca/logs/log"
