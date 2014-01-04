@@ -327,8 +327,8 @@ set( SkeletonKey_Src_Files
 # platform dependant game files:
 if (NC_BUILD_PLATFORM_QNX)
    set(SkeletonKey_Src_PlatfFiles
-	${LOCAL_SOURCE_ROOT}/Qnx/_bb_simple_audio_engine.cpp
-	${LOCAL_SOURCE_ROOT}/Qnx/_bb_simple_audio_engine.h
+	${LOCAL_SOURCE_ROOT}/qnx/_bb_simple_audio_engine.cpp
+	${LOCAL_SOURCE_ROOT}/qnx/_bb_simple_audio_engine.h
    )
 endif(NC_BUILD_PLATFORM_QNX)
 

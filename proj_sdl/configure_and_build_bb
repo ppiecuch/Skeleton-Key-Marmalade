@@ -7,6 +7,7 @@
 TARGET=""
 VERBOSE=""
 MESSAGE=""
+SIGNING_PASSWORD=""
 
 # Check and rebuild arguments
 options=()  # the buffer array for the parameters
@@ -25,6 +26,10 @@ do
 	    ;;
 	clean*)
 	    TARGET="clean"
+	    ;;
+	password*)
+	    SIGNING_PASSWORD="$2"
+	    shift
 	    ;;
 	verbose*)
 	    VERBOSE="VERBOSE=1"
@@ -104,14 +109,24 @@ else
     CC_COMMAND=$QNX_HOST/usr/bin/qcc
 fi
 
+if [ -z "$SIGNING_PASSWORD" ] ; then
+    SIGNING_PASSWORD=`grep SIGNING_PASSWORD CMakeCache.txt | cut -f 2 -d=`
+    if [ -z "$SIGNING_PASSWORD" ] ; then
+	if [ ".$TARGET" == ".run" ] ; then
+	    echo "** Signing password is required for building a package."
+	    exit 1
+	fi
+    fi
+fi
+
+echo "** Build type: $BUILDTYPE"
+
 if [ -z "$BUILDTYPE" ] ; then
     BUILDTYPE=`grep CMAKE_BUILD_TYPE CMakeCache.txt | cut -f 2 -d=`
     if [ -z "$BUILDTYPE" ] ; then
 	BUILDTYPE="Release"
     fi
 fi
-
-echo "** Build type: $BUILDTYPE"
 
 if [ ! -z "$PROFILE" ] ; then
     PROFILER_FLAGS="-p"
@@ -164,7 +179,7 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
     -DCMAKE_INSTALL_PREFIX="$STAGE_DIR" \
     -DCMAKE_ECLIPSE_GENERATE_SOURCE_PROJECT=TRUE \
     -DSDLDIR="$sdl_root" \
-    -DSIGNING_PASSWORD="awec12" \
+    -DSIGNING_PASSWORD="$SIGNING_PASSWORD" \
     -DDEBUG_TOKEN="`pwd`/debugtoken1.bar" \
     -DDEVICE_PASSWORD="1234" \
     -G"Eclipse CDT4 - Unix Makefiles" \

@@ -5,6 +5,20 @@ SDKROOT=$SDK/target_10_0_9_1673/macosx/x86
 DEVICEIP=169.254.0.1
 DEVICEPW=1234
 
+STOREPASS=$1
+
+if [ ".$STOREPASS" == "." ]
+    STOREPASS=`cat .storepass`
+fi
+
+if [ ".$STOREPASS" == "." ]
+    echo "Error: missing store password."
+    echo "Usage: $0 <store password>"
+    exit 1
+fi
+
+echo $STOREPASS > .storepass
+
 . $SDK/bbndk-env.sh
 
 # create and deply debug token:
