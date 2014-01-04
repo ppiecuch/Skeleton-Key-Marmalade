@@ -208,6 +208,14 @@ set( LOCAL_SOURCE_ROOT ${PROJECT_SOURCE_DIR}/source )
 set( DATA_ROOT ${PROJECT_SOURCE_DIR}/../data )
 set( SOURCE_ROOT ${PROJECT_SOURCE_DIR}/../source )
 set( SkeletonKey_Src_Files
+	## (data files)
+	${DATA_ROOT}/fonts/font_algerian_16.h
+	${DATA_ROOT}/fonts/font_algerian_24.h
+	${DATA_ROOT}/fonts/font_gabriola_14.h
+	${DATA_ROOT}/fonts/font_gabriola_22b.h
+	${DATA_ROOT}/fonts/font_algerian_20.h
+	${DATA_ROOT}/fonts/font_deutsch_26.h
+	${DATA_ROOT}/fonts/font_gabriola_16b.h
 	## (source)
 	${SOURCE_ROOT}/main.cpp
 	${SOURCE_ROOT}/config.h
@@ -263,6 +271,30 @@ set( SkeletonKey_Src_Files
 	${SOURCE_ROOT}/ig2d/ig_sprite.cpp
 	${SOURCE_ROOT}/ig2d/ig_touches.h
 	${SOURCE_ROOT}/ig2d/ig_touches.cpp
+	## (source/dgreedutils)
+	${LOCAL_SOURCE_ROOT}/dgreed/system.h
+	${LOCAL_SOURCE_ROOT}/dgreed/system.c
+	${LOCAL_SOURCE_ROOT}/dgreed/darray.h
+	${LOCAL_SOURCE_ROOT}/dgreed/darray.c
+	${LOCAL_SOURCE_ROOT}/dgreed/memory.h
+	${LOCAL_SOURCE_ROOT}/dgreed/memory.c
+	${LOCAL_SOURCE_ROOT}/dgreed/mempool.c
+	${LOCAL_SOURCE_ROOT}/dgreed/mempool.h
+	${LOCAL_SOURCE_ROOT}/dgreed/miniz.c
+	${LOCAL_SOURCE_ROOT}/dgreed/sophist.h
+	${LOCAL_SOURCE_ROOT}/dgreed/async.c
+	${LOCAL_SOURCE_ROOT}/dgreed/async.h
+	${LOCAL_SOURCE_ROOT}/dgreed/utils.h
+	${LOCAL_SOURCE_ROOT}/dgreed/utils.c
+	${LOCAL_SOURCE_ROOT}/dgreed/datastruct.h
+	${LOCAL_SOURCE_ROOT}/dgreed/datastruct.c
+	${LOCAL_SOURCE_ROOT}/dgreed/mml.h
+	${LOCAL_SOURCE_ROOT}/dgreed/mml.c
+	${LOCAL_SOURCE_ROOT}/dgreed/localization.h
+	${LOCAL_SOURCE_ROOT}/dgreed/localization.c
+	${LOCAL_SOURCE_ROOT}/dgreed/wav.h
+	${LOCAL_SOURCE_ROOT}/dgreed/wav.c
+	${LOCAL_SOURCE_ROOT}/dgreed/system.h
 	## (source/sqlite3)
     	${SOURCE_ROOT}/sqlite3/sqlite3.h
     	${SOURCE_ROOT}/sqlite3/sqlite3ext.h
@@ -281,6 +313,8 @@ set( SkeletonKey_Src_Files
 	${LOCAL_SOURCE_ROOT}/stb/stb_image_aug.c
 	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS.h
 	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS_aug_c.h
+	${LOCAL_SOURCE_ROOT}/stb/SOIL.h
+	${LOCAL_SOURCE_ROOT}/stb/SOIL.cpp
 	${LOCAL_SOURCE_ROOT}/AngelcodeFont.cpp
 	${LOCAL_SOURCE_ROOT}/FPSLimit.cpp
 	${LOCAL_SOURCE_ROOT}/SDLGLFont.cpp
@@ -338,6 +372,7 @@ set( THIRD_PARTY ./third_party/ )
 include_directories(
 	${SDL_INCLUDE_DIR}
 	${LOCAL_SOURCE_ROOT}/compat/
+	${LOCAL_SOURCE_ROOT}/dgreed/
 	${LOCAL_SOURCE_ROOT}/stb/
 	${LOCAL_SOURCE_ROOT}/Qnx
 	${LOCAL_SOURCE_ROOT}
@@ -545,6 +580,19 @@ SET(SkeletonKey_Data_Files
 	graphics/select_level/select_level_header.png
 	graphics/select_level/select_level_perfect.png
 	graphics/select_level/select_level_ship.png
+	#
+	fonts/font_algerian_16.tga
+	fonts/font_algerian_24.tga
+	fonts/font_gabriola_14.tga
+	fonts/font_gabriola_22b.tga
+	fonts/font_algerian_20.tga
+	fonts/font_deutsch_26.tga
+	fonts/font_gabriola_16b.tga
+	#
+	achievements.db
+	levels.db
+	saved_game.db
+	settings.db
 )
 SET_SOURCE_FILES_PROPERTIES(
 	${SkeletonKey_Data_Files}

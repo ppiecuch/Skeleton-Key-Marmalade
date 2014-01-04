@@ -8,8 +8,8 @@
 #include "AngelcodeFont.h"
 
 #ifdef _MSC_VER
-#pragma warning(disable:4244) 
-#pragma warning(disable:4305) 
+# pragma warning(disable:4244) 
+# pragma warning(disable:4305) 
 #endif
 
 #define USE_BASIC_PARTICLES
@@ -21,9 +21,9 @@
 // ID collisions by defining IMGUI_SRC_ID before
 // this define block:
 #ifdef IMGUI_SRC_ID
-#define GEN_ID ((IMGUI_SRC_ID) + (__LINE__))
+# define GEN_ID ((IMGUI_SRC_ID) + (__LINE__))
 #else
-#define GEN_ID (__LINE__)
+# define GEN_ID (__LINE__)
 #endif
 
 
@@ -114,4 +114,5 @@ void imgui_finish();
 
 const char *resourceRoot ();
 const char *resourcePath (const char *filename);
+bool resourceExists (const char *filename);
 const char *writePath (const char *file);

@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <SDL_image.h>
+#include <sys/stat.h>
 #include <math.h>
 #include <unistd.h>
 #if 0
@@ -46,6 +47,16 @@ const char *resourcePath (const char *filename) {
     snprintf(path, FILENAME_MAX, "%s%s", resourceRoot(), filename); return path;
   } else
     return resourceRoot();
+}
+
+bool resourceExists (const char *filename) {
+  if (filename) {
+    char path[FILENAME_MAX] = { 0 };
+    snprintf(path, FILENAME_MAX, "%s%s", resourceRoot(), filename);
+    struct stat st;
+    return (stat(path, &st) == 0);
+  } else
+    return false;
 }
 
 const char *writePath (const char *file) {

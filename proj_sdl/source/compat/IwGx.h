@@ -24,7 +24,9 @@ typedef CIwVec2<int> CIwIVec2;
 typedef CIwVec2<int16> CIwSVec2;
 typedef CIwVec2<float> CIwFVec2;
 
-class CIwMat2D : public affinetransform::AffineTransformT<float>
+typedef affinetransform::AffineTransformT<float> AffineTransform;
+
+class CIwMat2D : public AffineTransform
 {
  public:
   void SetIdentity() { identity(); }

@@ -13,7 +13,8 @@
     <initialWindow>
         <systemChrome>none</systemChrome>
         <transparent>false</transparent>
-        <autoOrients>true</autoOrients>
+	<aspectRatio>portrait</aspectRatio>
+	<autoOrients>false</autoOrients>
     </initialWindow>
     <publisher>KomSoft</publisher>
     <action system="true">run_native</action>

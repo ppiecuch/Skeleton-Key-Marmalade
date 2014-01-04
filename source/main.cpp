@@ -156,6 +156,10 @@ void gameJustGenerateTextures() {
 }
 
 int main(int argc, char* argv[]) {
+
+	time_t ts = time(NULL);
+	fprintf(stderr, "Entered %s - main started at %s", argv[0], ctime(&ts));
+
 	// init
 	gameInit();
 

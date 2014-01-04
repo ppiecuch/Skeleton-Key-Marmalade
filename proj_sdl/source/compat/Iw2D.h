@@ -26,9 +26,9 @@ class CIw2DFont {
   // --
 };
 
-inline static void Iw2DInit() { }
-inline static void Iw2DTerminate() { }
-inline static void Iw2DSurfaceShow() { }
+void Iw2DInit();
+void Iw2DTerminate();
+void Iw2DSurfaceShow();
 void Iw2DFinishDrawing();
 // always full screen
 uint32 Iw2DGetSurfaceHeight();

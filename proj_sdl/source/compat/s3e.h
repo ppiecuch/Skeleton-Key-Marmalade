@@ -59,7 +59,7 @@ enum s3eKeys {
 
 #define IW_FIXED(v) (v)
 
-#define s3eDebugOutputString(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__)
+#define s3eDebugOutputString(fmt, ...) fprintf(stderr, fmt, ##__VA_ARGS__);fprintf(stderr, "\n")
 
 inline static void* s3eMallocBase(int size) { return malloc(size); }
 inline static void s3eFreeBase(void* item) { free(item); }
@@ -80,9 +80,9 @@ inline static s3eResult s3eConfigGetString(const char *conf, const char *sect, c
 inline static s3eResult s3eDeviceRegister(s3eEnum ev, s3eCallback fn, void* userdata) { }
 inline static s3eResult s3eDeviceUnRegister(s3eEnum ev, s3eCallback fn) { }
 
-inline static void s3eKeyboardUpdate() { }
-inline static s3eEnum s3eKeyboardGetState(s3eKeys key) { }
-inline static s3eBool s3eDeviceCheckQuitRequest() { return S3E_FALSE; }
+void s3eKeyboardUpdate();
+s3eEnum s3eKeyboardGetState(s3eKeys key);
+s3eBool s3eDeviceCheckQuitRequest();
 
 inline static s3eBool s3eExtOSExecAvailable() { return S3E_FALSE; }
 inline static s3eResult s3eOSExecExecute(const char* url, s3eBool exit) { return S3E_RESULT_ERROR; }
@@ -111,10 +111,17 @@ int s3eSoundGetFreeChannel();
 const char* s3eSoundGetErrorString();
 void s3eSoundSetInt(s3eEnum f, int v);
 
+/// Utility macros:
 #define f_ssprintf(...)                                 \
     ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \
     char *_ss_ret = (char*)alloca(_ss_size+1);          \
     snprintf(_ss_ret, _ss_size+1, ##__VA_ARGS__);       \
     _ss_ret; })
+
+/// Toolkit functions:
+extern const char *resourceRoot ();
+extern const char *resourcePath (const char *filename);
+extern bool resourceExists (const char *filename);
+extern const char *writePath (const char *file);
 
 #endif /* __compat_s3e_h__ */

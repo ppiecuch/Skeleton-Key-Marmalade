@@ -325,7 +325,16 @@ unsigned int
 		unsigned int reuse_texture_ID,
 		unsigned int flags
 	);
-
+#ifdef __cplusplus
+unsigned int
+	SOIL_create_OGL_texture2
+	(
+		const unsigned char *const data,
+		int &width, int &height, int channels,
+		unsigned int reuse_texture_ID,
+		unsigned int flags
+	);
+#endif
 /**
 	Creates an OpenGL cubemap texture by splitting up 1 image into 6 parts.
 	\param data the raw data to be uploaded as an OpenGL texture

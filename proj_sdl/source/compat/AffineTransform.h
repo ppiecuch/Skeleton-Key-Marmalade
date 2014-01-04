@@ -22,6 +22,29 @@ namespace affinetransform
     template<typename T> struct matrix4
     {
       T m[16];
+      matrix4(T c0, T c4, T c8, T c12,
+	      T c1, T c5, T c9, T c13,
+	      T c2, T c6, T c10, T c14,
+	      T c3, T c7, T c11, T c15
+	      ) {
+	m[0] = c0;
+	m[1] = c1;
+	m[2] = c2;
+	m[3] = c3;
+	m[4] = c4;
+	m[5] = c5;
+	m[6] = c6;
+	m[7] = c7;
+	m[8] = c8;
+	m[9] = c9;
+	m[10] = c10;
+	m[11] = c11;
+	m[12] = c12;
+	m[13] = c13;
+	m[14] = c14;
+	m[15] = c15;
+      }
+      const T *operator ()() const { return m; } // return pointer to the matrix array
     };
   }
 

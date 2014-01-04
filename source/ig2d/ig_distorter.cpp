@@ -99,7 +99,7 @@ float IGDistorter::distortBackY(float y) {
 	return y / multiply - offsetY;
 }
 
-/*void IGDistorter::display(CIw2DImage* image, IGPoint position, IGRect size) {
+/* void IGDistorter::display(CIw2DImage* image, IGPoint position, IGRect size) {
 	Iw2DDrawImage(image, 
 		CIwSVec2((int16)(offsetX+multiply*(position.x+size.width/2)), (int16)(offsetY+multiply*(position.y+size.height/2))), 
 		CIwSVec2((int16)(multiply*(size.width)), (int16)(multiply*(size.height))));
@@ -109,4 +109,4 @@ float IGDistorter::distortBackY(float y) {
 		CIwSVec2((int16)screenWidth, (int16)screenHeight),
 		CIwSVec2((int16)(offsetX),(int16)(offsetY)),
 		CIwSVec2((int16)(designWidth+2*offsetX), (int16)(designHeight+2*offsetY)));
-}*/
+} */
