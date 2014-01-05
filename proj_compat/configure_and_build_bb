@@ -39,11 +39,13 @@ do
 	    ;;
 	debug*)
 	    BUILDTYPE="Debug"
-	    if grep --quiet "CMAKE_BUILD_TYPE:STRING=${BUILDTYPE}" CMakeCache.txt; then
-		echo "** Config unchanged."
-	    else
-		echo "** Force to reconfigure build."
-		rm -f cmake.ts
+	    if [ -f CMakeCache.txt ]; then
+		if grep --quiet "CMAKE_BUILD_TYPE:STRING=${BUILDTYPE}" CMakeCache.txt; then
+		    echo "** Config unchanged."
+		else
+		    echo "** Force to reconfigure build."
+		    rm -f cmake.ts
+		fi
 	    fi
 	    ;;
 	configure*)
@@ -60,7 +62,9 @@ done
 set -- "${options[@]}"
 
 if [ ".$PLAT" == "." ]; then
-    PLAT=`grep PLAT_SDK CMakeCache.txt | cut -f 2 -d=`
+    if [ -f CMakeCache.txt ]; then
+	PLAT=`grep PLAT_SDK CMakeCache.txt | cut -f 2 -d=`
+    fi
 fi
 if [ -x "$PLAT" ]; then
     . $PLAT
@@ -110,7 +114,9 @@ else
 fi
 
 if [ -z "$SIGNING_PASSWORD" ] ; then
-    SIGNING_PASSWORD=`grep SIGNING_PASSWORD CMakeCache.txt | cut -f 2 -d=`
+    if [ -f CMakeCache.txt ]; then
+	SIGNING_PASSWORD=`grep SIGNING_PASSWORD CMakeCache.txt | cut -f 2 -d=`
+    fi
     if [ -z "$SIGNING_PASSWORD" ] ; then
 	if [ ".$TARGET" == ".run" ] ; then
 	    echo "** Signing password is required for building a package."
@@ -119,14 +125,16 @@ if [ -z "$SIGNING_PASSWORD" ] ; then
     fi
 fi
 
-echo "** Build type: $BUILDTYPE"
-
 if [ -z "$BUILDTYPE" ] ; then
-    BUILDTYPE=`grep CMAKE_BUILD_TYPE CMakeCache.txt | cut -f 2 -d=`
+    if [ -f CMakeCache.txt ]; then
+	BUILDTYPE=`grep CMAKE_BUILD_TYPE CMakeCache.txt | cut -f 2 -d=`
+    fi
     if [ -z "$BUILDTYPE" ] ; then
 	BUILDTYPE="Release"
     fi
 fi
+
+echo "** Build type: $BUILDTYPE"
 
 if [ ! -z "$PROFILE" ] ; then
     PROFILER_FLAGS="-p"

@@ -173,9 +173,6 @@ endif ()
    set_xcode_property (hello-lib GCC_GENERATE_DEBUGGING_SYMBOLS YES)
 endif ()
 
-include(CMakeDependentOption)
-include(CheckCXXCompilerFlag)
-
 if(SDLDIR)
 	set(ENV{SDLDIR} ${SDLDIR})
  endif()
@@ -196,12 +193,17 @@ if(NOT SDL_FOUND)
        		 EXECUTE_PROCESS(COMMAND ${SDLDIR}/bin/sdl-config --libs 
        	      	 	OUTPUT_VARIABLE SDL_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 		 message( "** Configuration for SDL library found: ${SDL_VERSION}." )
+       else()
+		 message( "** Configuration for SDL library not found. Using ${SDLDIR} for root directory." )
        endif()
 
        set(SDL_INCLUDE_DIR ${SDLDIR}/include)
        set(SDL_LIB_DIR ${SDLDIR}/lib)
-       set(SDL_LIBRARY SDL)
- endif()
+       set(SDL_LIBRARY SDL) # SDL library name (-lSDL)
+endif()
+
+include(CMakeDependentOption)
+include(CheckCXXCompilerFlag)
 
 # game files:
 set( LOCAL_SOURCE_ROOT ${PROJECT_SOURCE_DIR}/source )
@@ -342,6 +344,7 @@ if (NC_BUILD_PLATFORM_QNX)
        PROPERTIES
        COMPILE_FLAGS  "${SDL_CFLAGS} -Wno-psabi -Duint8=uint8_t -Dint8=int8_t -Duint16=uint16_t -Duint32=uint32_t -DBOOL=int -DYES=1 -DNO=0")
    set(PLATF_LIBS
+		libogg.a
    		  freetype
 		  GLES_bc EGL GLESv2
 		  OpenAL alut bps pps screen asound scoreloopcore
@@ -374,7 +377,7 @@ include_directories(
 	${LOCAL_SOURCE_ROOT}/compat/
 	${LOCAL_SOURCE_ROOT}/dgreed/
 	${LOCAL_SOURCE_ROOT}/stb/
-	${LOCAL_SOURCE_ROOT}/Qnx
+	${LOCAL_SOURCE_ROOT}/qnx
 	${LOCAL_SOURCE_ROOT}
 	${SOURCE_ROOT}
 	${DATA_ROOT}
