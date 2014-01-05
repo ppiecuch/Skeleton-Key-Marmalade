@@ -344,11 +344,11 @@ if (NC_BUILD_PLATFORM_QNX)
        PROPERTIES
        COMPILE_FLAGS  "${SDL_CFLAGS} -Wno-psabi -Duint8=uint8_t -Dint8=int8_t -Duint16=uint16_t -Duint32=uint32_t -DBOOL=int -DYES=1 -DNO=0")
    set(PLATF_LIBS
-		libogg.a
-   		  freetype
-		  GLES_bc EGL GLESv2
-		  OpenAL alut bps pps screen asound scoreloopcore
-		  curl crypto mmrndclient icuuc icui18n strm)
+		libogg.a libvorbis.a
+   		freetype
+		GLES_bc EGL GLESv2
+		OpenAL alut bps pps screen asound scoreloopcore
+		curl crypto mmrndclient icuuc icui18n strm)
 endif (NC_BUILD_PLATFORM_QNX)
 
 if (NC_BUILD_PLATFORM_IOS)
