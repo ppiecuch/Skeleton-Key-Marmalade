@@ -222,7 +222,7 @@ static int _cp(const char *to, const char *from) {
 
 int32 s3ePointerGetInt(s3ePointerProperty property) 
 {
-  if (property == S3E_POINTER_MULTI_TOUCH_AVAILABLE) return 1;
+  if (property == S3E_POINTER_MULTI_TOUCH_AVAILABLE) return 0;
 }
 
 struct s3eCallbackInfo {
@@ -272,20 +272,26 @@ s3eResult s3ePointerUpdate()
     case SDL_MOUSEBUTTONDOWN:
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
-	s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 1, x, y };
-	_ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
+	if (_ptrButtonEvent.fn) {
+	  s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 1, x, y };
+	  _ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
+	}
       }; break;
     case SDL_MOUSEBUTTONUP:
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
-	s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 0, x, y };
-	_ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
+	if (_ptrButtonEvent.fn) {
+	  s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 0, x, y };
+	  _ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
+	}
       }; break;
     case SDL_MOUSEMOTION: 
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
-	s3ePointerMotionEvent ev = { x, y };
-	_ptrTouchMotionEvent.fn( &ev, _ptrTouchMotionEvent.userData);
+	if (_ptrTouchMotionEvent.fn) {
+	  s3ePointerMotionEvent ev = { x, y };
+	  _ptrTouchMotionEvent.fn( &ev, _ptrTouchMotionEvent.userData);
+	}
       }; break;
     }
 }
@@ -468,7 +474,7 @@ int s3eSoundGetFreeChannel() {
   alGenBuffers (1, &buffer);
   if (alGetError () != AL_NO_ERROR)
     {
-      _audio_error = "*** s3eSoundGetFreeChannel: failed with alGenBuffers.";
+      _audio_error = "s3eSoundGetFreeChannel: failed with alGenBuffers.";
       fprintf (stderr, "*** %s\n", _audio_error.c_str());
       return -1;
     }
@@ -632,7 +638,7 @@ public:
 
 CIw2DImage* Iw2DCreateImageResource(const char* resource)
 {
-  const char *_search[] = { "", "graphics/", "graphics/menu/", "graphics/backgrounds/", NULL };
+  const char *_search[] = { "", "graphics/", "graphics/menu/", "graphics/backgrounds/", "graphics/map/", NULL };
   const char *path = NULL;
   for(char **p=(char**)_search; *p != NULL; p++)
     if (resourceExists(f_ssprintf("%s%s.png", *p, resource))) {
@@ -641,8 +647,10 @@ CIw2DImage* Iw2DCreateImageResource(const char* resource)
     }
   if (path)
     return new CcIw2DImage(path);
-  else
+  else {
+    fprintf(stderr, "*** Resource image %s not found.\n", resource);
     return NULL;
+  }
 }
 
 CIw2DFont* Iw2DCreateFontResource(const char* resource)

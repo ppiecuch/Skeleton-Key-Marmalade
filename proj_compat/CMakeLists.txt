@@ -344,7 +344,7 @@ if (NC_BUILD_PLATFORM_QNX)
        PROPERTIES
        COMPILE_FLAGS  "${SDL_CFLAGS} -Wno-psabi -Duint8=uint8_t -Dint8=int8_t -Duint16=uint16_t -Duint32=uint32_t -DBOOL=int -DYES=1 -DNO=0")
    set(PLATF_LIBS
-		libogg.a libvorbis.a
+		libogg.a libvorbis.a libvorbisfile.a
    		freetype
 		GLES_bc EGL GLESv2
 		OpenAL alut bps pps screen asound scoreloopcore
