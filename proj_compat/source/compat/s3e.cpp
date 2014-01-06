@@ -280,6 +280,8 @@ s3eResult s3ePointerUpdate()
     case SDL_MOUSEMOTION: 
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	s3ePointerMotionEvent ev = { x, y };
+	_ptrTouchMotionEvent.fn( &ev, _ptrTouchMotionEvent.userData);
       }; break;
     }
 }
