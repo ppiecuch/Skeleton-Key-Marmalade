@@ -111,7 +111,7 @@ unsigned int
 	SOIL_internal_create_OGL_texture
 	(
 		const unsigned char *const data,
-		int width, int height, int channels,
+		int &width, int &height, int channels,
 		unsigned int reuse_texture_ID,
 		unsigned int flags,
 		unsigned int opengl_texture_type,
@@ -1060,7 +1060,7 @@ unsigned int
 	SOIL_internal_create_OGL_texture
 	(
 		const unsigned char *const data,
-		int width, int height, int channels,
+		int &width, int &height, int channels,
 		unsigned int reuse_texture_ID,
 		unsigned int flags,
 		unsigned int opengl_texture_type,

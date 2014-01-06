@@ -76,7 +76,7 @@ static uint32 _GetDevWidth() {
   #if defined __BB10__
   return 1280;
   #elif defined __PLAYBOOK__
-  return 1024;
+  return 600;
   #else
   #error Cannot determine device.
   #endif
@@ -86,7 +86,7 @@ static uint32 _GetDevHeight() {
   #if defined __BB10__
   return 768;
   #elif defined __PLAYBOOK__
-  return 600;
+  return 1024;
   #else
   #error Cannot determine device.
   #endif
@@ -284,8 +284,132 @@ s3eResult s3ePointerUpdate()
     }
 }
 
-void s3eKeyboardUpdate() {   keys = SDL_GetKeyState(NULL); }
-s3eEnum s3eKeyboardGetState(s3eKeys key) { }
+const int s3eKeyCount = 211;
+
+static SDLKey s_s3eToSDLTranslation[s3eKeyCount] =
+{
+	(SDLKey)0, //s3eKeyFirst
+	SDLK_ESCAPE,//	s3eKeyEsc ,				//!< Esc.
+	SDLK_TAB,//	s3eKeyTab ,				//!< Tab.
+	SDLK_BACKSPACE,//	s3eKeyBackspace ,		//!< Backspace.
+	SDLK_RETURN,//  s3eKeyEnter ,			//!< Enter.
+	SDLK_LSHIFT,//  s3eKeyShift ,			//!< Key Shift.
+	SDLK_LCTRL,//  s3eKeyControl ,			//!< Key Control. 
+	(SDLKey)0,//  s3eKeyResevered , 		//!< Reserved, do not use.
+	SDLK_SPACE,//  s3eKeySpace ,			//!< Key Space.
+	SDLK_LEFT,//  s3eKeyLeft ,			//!< Key Left. 
+	SDLK_UP,//  s3eKeyUp ,				//!< Key Up. 
+	SDLK_RIGHT,//  s3eKeyRight ,			//!< Key Right. 
+	SDLK_DOWN,//  s3eKeyDown ,			//!< Key Down. 
+	SDLK_0,//  s3eKey0 ,				//!< Key 0. 
+	SDLK_1,//  s3eKey1 ,				//!< Key 1. 
+	SDLK_2,//  s3eKey2 ,				//!< Key 2. 
+	SDLK_3,//  s3eKey3 ,				//!< Key 3. 
+	SDLK_4,//  s3eKey4 ,				//!< Key 4. 
+	SDLK_5,//  s3eKey5 ,				//!< Key 5. 
+	SDLK_6,//  s3eKey6 ,				//!< Key 6. 
+	SDLK_7,//  s3eKey7 ,				//!< Key 7. 
+	SDLK_8,//  s3eKey8 ,				//!< Key 8. 
+	SDLK_9,//  s3eKey9 ,				//!< Key 9. 
+	SDLK_a,//3eKeyA ,				//!< Key A.
+	SDLK_b,//  s3eKeyB ,				//!< Key B. 
+	SDLK_c,//3eKeyC ,				//!< Key C. 
+	SDLK_d,//  s3eKeyD ,				//!< Key D. 
+	SDLK_e,//  s3eKeyE ,				//!< Key E. 
+	SDLK_f,//  s3eKeyF ,				//!< Key F. 
+	SDLK_g,//  s3eKeyG ,				//!< Key G. 
+	SDLK_h,//  s3eKeyH ,				//!< Key H. 
+	SDLK_i,//  s3eKeyI ,				//!< Key I. 
+	SDLK_j,//  s3eKeyJ ,				//!< Key J. 
+	SDLK_k,//  s3eKeyK ,				//!< Key K. 
+	SDLK_l,//  s3eKeyL ,				//!< Key L. 
+	SDLK_m,//  s3eKeyM ,				//!< Key M. 
+	SDLK_n,//  s3eKeyN ,				//!< Key N. 
+	SDLK_o,//  s3eKeyO ,				//!< Key O.
+	SDLK_p,//  s3eKeyP ,				//!< Key P. 
+	SDLK_q,//  s3eKeyQ ,				//!< Key Q. 
+	SDLK_r,//  s3eKeyR ,				//!< Key R. 
+	SDLK_s,//  s3eKeyS ,				//!< Key S. 
+	SDLK_t,//  s3eKeyT ,				//!< Key T. 
+	SDLK_u,//  s3eKeyU ,				//!< Key U. 
+	SDLK_v,//  s3eKeyV ,				//!< Key V. 
+	SDLK_w,//  s3eKeyW ,				//!< Key W.
+	SDLK_x,//3eKeyX ,				//!< Key X. 
+	SDLK_y,//  s3eKeyY ,				//!< Key Y. 
+	SDLK_z,//  s3eKeyZ ,				//!< Key Z. 
+	SDLK_F1,//  s3eKeyF1 ,				//!< Key F1. 
+	SDLK_F2,//3eKeyF2 ,				//!< Key F2.
+	SDLK_F3,//  s3eKeyF3 ,				//!< Key F3. 
+	SDLK_F4,//  s3eKeyF4 ,				//!< Key F4.
+	SDLK_F5,//  s3eKeyF5 ,				//!< Key F5. 
+	SDLK_F6,//  s3eKeyF6 ,				//!< Key F6. 
+	SDLK_F7,//  s3eKeyF7 ,				//!< Key F7. 
+	SDLK_F8,//3eKeyF8 ,				//!< Key F8.
+	SDLK_F9,//  s3eKeyF9 ,				//!< Key F9. 
+	SDLK_F10,//  s3eKeyF10 ,				//!< Key F10. 
+	SDLK_KP0,//3eKeyNumPad0 ,			//!< Key NumPad0.
+	SDLK_KP1,//3eKeyNumPad1 ,			//!< Key NumPad1.
+	SDLK_KP2,//3eKeyNumPad2 ,			//!< Key NumPad2.
+	SDLK_KP3,//3eKeyNumPad3 ,			//!< Key NumPad3.
+	SDLK_KP4,//3eKeyNumPad4 ,			//!< Key NumPad4.
+	SDLK_KP5,//3eKeyNumPad5 ,			//!< Key NumPad5.
+	SDLK_KP6,//3eKeyNumPad6 ,			//!< Key NumPad6.
+	SDLK_KP7,//3eKeyNumPad7 ,			//!< Key NumPad7.
+	SDLK_KP8,//3eKeyNumPad8 ,			//!< Key NumPad8.
+	SDLK_KP9,//3eKeyNumPad9 ,			//!< Key NumPad9.
+	SDLK_KP_PLUS,//3eKeyNumPadPlus ,		//!< Key NumPadPlus.
+	SDLK_KP_MINUS,//3eKeyNumPadMinus ,		//!< Key NumPadMinus.
+	SDLK_KP_ENTER,//3eKeyNumPadEnter ,		//!< Key NumPadEnter.
+
+	//Not too sure about these...
+
+	SDLK_RETURN,//3eKeyRSK ,				//!< Right Soft Key.
+	SDLK_ESCAPE,//3eKeyLSK ,				//!< Left Soft Key.
+	(SDLKey)0,//3eKeyLS ,				//!< Left Shoulder button.
+	(SDLKey)0,//3eKeyRS ,				//!< Right shoulder button.
+	SDLK_HASH,//3eKeyHash ,			//!< # Key.
+	SDLK_ASTERISK,//3eKeyStar ,			//!< * Key.
+	SDLK_SPACE,//3eKeyOk ,				//!< Select Key.
+	SDLK_BACKSPACE,//3eKeyCLR ,				//!< CLR key.
+	//   ,// Volume
+	(SDLKey)0,//3eKeyVolUp ,			//!< Volume Up Key.
+	(SDLKey)0,//3eKeyVolDown ,			//!< Volume Down Key.
+	//  ,
+	///,Misc.
+	(SDLKey)0,//3eKeyCamera ,			//!< Camera button.
+	(SDLKey)0,//3eKeyMic ,				//!< Microphone button.
+	(SDLKey)0,//3eKeyFn ,				//!< Fn button.
+	(SDLKey)0,//3eKeySym ,				//!< Sym button.
+	////,Call  
+	(SDLKey)0,//3eKeyAccept ,			//!< call accept (talk).
+	(SDLKey)0,//3eKeyEnd ,				//!< call end (reject).
+	SDLK_HOME,//3eKeyHomePage ,		//!< Home key.
+	SDLK_WORLD_0,//s3eKeyButton1 ,			//<! Generic Button1.
+	SDLK_WORLD_1,//3eKeyButton2 ,			//<! Generic Button2.
+	SDLK_WORLD_2,//3eKeyButton3 ,			//<! Generic Button3.
+	SDLK_WORLD_3,//3eKeyButton4 ,			//<! Generic Button4.
+	SDLK_WORLD_4,//3eKeyButton5 ,			//<! Generic Button5.
+	SDLK_WORLD_5,//3eKeyButton6 ,			//<! Generic Button6.
+	SDLK_WORLD_6,//3eKeyButton7 ,			//<! Generic Button7.
+	SDLK_WORLD_7,//3eKeyButton8 ,			//<! Generic Button8.
+	SDLK_F11,//s3eKeyF11 ,				//!< Key F11. 
+	SDLK_F12,//3eKeyF12 ,				//!< Key F12. 
+	SDLK_LALT,//3eKeyAlt ,				//!< Alt key.
+	SDLK_a,//s3eKeyAbsGameA = 200,	//<! Abstract Game keyA.
+	SDLK_s,//3eKeyAbsGameB ,		//<! Abstract Game keyB.
+	SDLK_d,//3eKeyAbsGameC ,		//<! Abstract Game keyC.
+	SDLK_f,//3eKeyAbsGameD ,		//<! Abstract Game keyD.
+	SDLK_UP,//3eKeyAbsUp	,			//<! Abstract Up.
+	SDLK_DOWN,//3eKeyAbsDown ,			//<! Abstract Down.
+	SDLK_LEFT,//3eKeyAbsLeft ,			//<! Abstract Left.
+	SDLK_RIGHT,//3eKeyAbsRight ,		//<! Abstract Right.
+	SDLK_SPACE,//3eKeyAbsOk ,			//<! Abstract Ok.
+	SDLK_RETURN,//3eKeyAbsASK,			//<! Abstract action softkey.
+	SDLK_ESCAPE,//s3eKeyAbsBSK,			//<! Abstract backwards softkey.
+};
+
+void s3eKeyboardUpdate() { keys = SDL_GetKeyState(NULL); }
+s3eEnum s3eKeyboardGetState(s3eKeys key) { keys[s_s3eToSDLTranslation[key]]?S3E_KEY_STATE_PRESSED:S3E_KEY_STATE_RELEASED; }
 s3eBool s3eDeviceCheckQuitRequest() { return done; }
 
 int32 s3eFileGetSize(s3eFile* file) {
