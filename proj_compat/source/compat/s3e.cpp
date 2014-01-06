@@ -272,10 +272,14 @@ s3eResult s3ePointerUpdate()
     case SDL_MOUSEBUTTONDOWN:
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 1, x, y };
+	_ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
       }; break;
     case SDL_MOUSEBUTTONUP:
       {
 	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 0, x, y };
+	_ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
       }; break;
     case SDL_MOUSEMOTION: 
       {
