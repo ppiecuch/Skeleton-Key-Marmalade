@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#
+# Recreate expired token and upplaod to the device.
+#
+
+SDK=/Developer/SDKs/bbndk
+DEVICEIP=169.254.0.1
+DEVICEPW=1234
+if [ ".$1" == "storepass" ]; then
+    shift
+    pass=$1
+    shift
+fi
+if [ ".$1" != "." ]; then
+	# use alternate device password
+	DEVICEPW=$1
+fi
+dt=debugtoken1
+
+if [ -z "$pass" ]; then
+    pass=`cat .storepass`
+    if [ -z "$pass" ]; then
+	echo "$0 storepass <store password> [<device password>]"
+	echo "$0: no password for store has been found."
+	exit 1
+    fi
+fi
+
+. $SDK/bbndk-env.sh
+
+expired=`blackberry-debugtokenrequest -verify "$dt.bar"|grep EXPIRED`
+if [ ".$expired" != "." ]; then
+    echo "$0: Token expired - recreating first."
+# create and deply debug token:
+    blackberry-debugtokenrequest \
+	-devicepin 2A1A754E -devicepin 5010EA59 -devicepin 2ABF8A4A -devicepin 501FE0FE \
+	-storepass "$pass" "$dt.bar"
+    unzip "$dt.bar" META-INF/MANIFEST.MF && cat META-INF/MANIFEST.MF | grep Author-Id | tee > "$dt.txt" && cat "$dt.txt"
+    rm -rf META-INF
+fi
+
+# deploy token:
+blackberry-deploy -installDebugToken "$dt.bar" -device $DEVICEIP -password $DEVICEPW
