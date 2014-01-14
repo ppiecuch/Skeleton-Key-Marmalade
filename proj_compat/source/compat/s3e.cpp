@@ -1,6 +1,7 @@
 #include "s3e.h"
 #include "IwGx.h"
 #include "Iw2D.h"
+#include "IwResManager.h"
 #include <SDL/SDL_opengl.h>
 #include <string>
 #include <vector>
@@ -21,6 +22,10 @@
 #include "foreach_.h"
 #include "utf8.h"
 
+#include "dgreed/utils.h"
+#include "dgreed/darray.h"
+#include "dgreed/memory.h"
+
 #if defined __QNXNTO__
 # include <bps/bps.h>
 # include <bps/navigator.h>
@@ -31,6 +36,8 @@
 #define _audio audio::SimpleAudioEngine::sharedEngine()
 
 #endif
+
+#define ENABLE_ANIM_BG (0)
 
 struct CIwGxFont
 {
@@ -102,12 +109,12 @@ const float scale_x = (float)screen_width / (float)virtual_width;
 const float scale_y = (float)screen_height / (float)virtual_height;
 
 // This is your target virtual resolution for the game, the size you built your game to
-static void _setupLetterBox() {
-  float targetAspectRatio = virtual_width/virtual_height;
+static void _setupLetterbox() {
+  float targetAspectRatio = (float)virtual_width/(float)virtual_height;
  
   // figure out the largest area that fits in this resolution at the desired aspect ratio
   int width = screen_width;
-  int height = (int)(width / targetAspectRatio + 0.5f);
+  int height = width / targetAspectRatio + 0.5f;
 
   if (height > screen_height ) {
     //It doesn't fit our height, we must switch to pillarbox then
@@ -116,42 +123,22 @@ static void _setupLetterBox() {
   }
  
   // set up the new viewport centered in the backbuffer
-  const int vp_x = (screen_width  / 2) - (width / 2);
-  const int vp_y = (screen_height / 2) - (height/ 2);
+  const int vp_x = (screen_width  / 2.) - (width / 2.);
+  const int vp_y = (screen_height / 2.) - (height / 2.);
  
-  glViewport(vp_x, vp_y, width,height);
+  glViewport(vp_x, vp_y, width, height);
 
   /// Now that our viewport is set we should set our 2d perspective
  
   glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
   glLoadIdentity();
   glOrtho(0, screen_width, screen_height, 0, -1, 1);
   glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
   glLoadIdentity();
-}
 
-static void _beginLetterBox() {
-  
-  /// So now we should push the transformations before actually drawing anything
-  
   // Push in scale transformations
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
   glScalef(scale_x, scale_y, 1.0f);
-}
-
-static void _endLetterBox() {
-  // This pops those matrices for the scale transformations.
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glPopMatrix();
-  // Now to finish we should end our 2D perspective
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();   
-  glMatrixMode(GL_MODELVIEW);
-  glPopMatrix();
+  printf("** Letterbox scale: %f,%f; viewport: %d %d %d %d.\n", scale_x, scale_y, vp_x, vp_y, width, height);
 }
 
 static bool _fileExists (const char *path) {
@@ -271,7 +258,7 @@ s3eResult s3ePointerUpdate()
       }; break;
     case SDL_MOUSEBUTTONDOWN:
       {
-	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	const int x = event.button.x, y = event.button.y;
 	if (_ptrButtonEvent.fn) {
 	  s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 1, x, y };
 	  _ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
@@ -279,7 +266,7 @@ s3eResult s3ePointerUpdate()
       }; break;
     case SDL_MOUSEBUTTONUP:
       {
-	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	const int x = event.button.x, y = event.button.y;
 	if (_ptrButtonEvent.fn) {
 	  s3ePointerEvent ev = { S3E_POINTER_BUTTON_LEFTMOUSE, 0, x, y };
 	  _ptrButtonEvent.fn( &ev, _ptrButtonEvent.userData);
@@ -287,7 +274,7 @@ s3eResult s3ePointerUpdate()
       }; break;
     case SDL_MOUSEMOTION: 
       {
-	const int x = event.button.x, y = _GetDevHeight() - event.button.y;
+	const int x = event.button.x, y = event.button.y;
 	if (_ptrTouchMotionEvent.fn) {
 	  s3ePointerMotionEvent ev = { x, y };
 	  _ptrTouchMotionEvent.fn( &ev, _ptrTouchMotionEvent.userData);
@@ -531,6 +518,8 @@ public:
     // try to read raw data:
     const char * path = resourceExists(font.image)?resourcePath(font.image):resourcePath(f_ssprintf("fonts/%s", font.image));
     unsigned char *idata = stbi_load( path, &width, &height, &channels, force_channels );
+    // font is in alpha channel
+    // bounds are in green channel
     if( idata == NULL ) {
       fprintf(stderr, "[CcIw2DFont] Failed to get raw data from the file %s - image not supported or not an image (%s).\n", 
 	      path, stbi_failure_reason());
@@ -538,13 +527,13 @@ public:
     }
 
     // create texture:
-    maxs = (float)width/(float)_nextpot(width);
-    maxt = (float)height/(float)_nextpot(height);
+    maxs = maxt = 1;
 
     char_w = (float)width/(float)num;
     char_h = height;
 
-    texture = SOIL_create_OGL_texture(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
+    texture = SOIL_create_OGL_texture2(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
+    free(idata);
 
     printf("CcIw2DFont image %s: texture %d, dim. %dx%d, tex. %fx%f\n", font.image, texture, width, height, maxs, maxt);
   }
@@ -555,6 +544,14 @@ public:
   float GetCharW() const { return char_w; }
   float GetCharH() const { return char_h; }
   int GetNumChars() const { return num; }
+  //  not_found_ch : not found character placeholder
+  int GetCharIndex(uint ch, char not_found_ch = '?') {
+    if (ch < 256)
+      return asciimap[ch];
+    else if (utf8map.count(ch))
+      return utf8map[ch];
+    else return asciimap[not_found_ch];
+  }
 };
 
 static map<string, CcIw2DFont*> _fonts;
@@ -586,6 +583,10 @@ void IwResManagerInit()
   }
 }
 
+// ----- IwGx -----
+
+const CIwMat2D CIwMat2D::Identity;
+
 // ----- Iw2D -----
 
 class CcIw2DImage : public CIw2DImage
@@ -616,10 +617,10 @@ public:
     size.x = width;
     size.y = height;
 
-    maxs = (float)width/(float)_nextpot(width);
-    maxt = (float)height/(float)_nextpot(height);
-
     texture = SOIL_create_OGL_texture2(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
+    free(idata);
+
+    maxs = maxt = 1;
 
     printf("CcIw2DImage image %s: texture %d, dim. %dx%d, tex. %fx%f\n", from_file, texture, width, height, maxs, maxt);
   }
@@ -636,18 +637,32 @@ public:
   float GetMaxT() const { return maxt; }
 };
 
+static map<string, CcIw2DImage*> _letterbox_bg;
+static CcIw2DImage* _curr_letterbox_bg = NULL;
+
 CIw2DImage* Iw2DCreateImageResource(const char* resource)
 {
-  const char *_search[] = { "", "graphics/", "graphics/menu/", "graphics/backgrounds/", "graphics/map/", NULL };
+  const char *_search[] = { 
+    "", 
+#ifdef __PLAYBOOK__
+    "graphics/backgrounds/playbook/",
+#endif
+    "graphics/backgrounds/",
+    "graphics/menu/",
+    "graphics/map/",
+    "graphics/options/",
+    "graphics/achievements/",
+    "graphics/select_level/",
+    NULL };
   const char *path = NULL;
   for(char **p=(char**)_search; *p != NULL; p++)
     if (resourceExists(f_ssprintf("%s%s.png", *p, resource))) {
       path = resourcePath(f_ssprintf("%s%s.png", *p, resource));
       break;
     }
-  if (path)
+  if (path) {
     return new CcIw2DImage(path);
-  else {
+  } else {
     fprintf(stderr, "*** Resource image %s not found.\n", resource);
     return NULL;
   }
@@ -662,13 +677,14 @@ CIw2DFont* Iw2DCreateFontResource(const char* resource)
   return NULL;
 }
 
-uint32 Iw2DGetSurfaceHeight() { return _GetDevHeight(); }
+uint32 Iw2DGetSurfaceWidth() { return screen_width; }
 
-uint32 Iw2DGetSurfaceWidth() { return _GetDevWidth(); }
+uint32 Iw2DGetSurfaceHeight() { return screen_height; }
 
 void Iw2DSetTransformMatrix(const CIwMat2D &m) {
+  printf("*** Applying new transformation matrix.\n");
   _current_matrix = m;
-  glMultMatrixf(AffineTransform::matrix(_current_matrix)());
+  glLoadMatrixf(AffineTransform::matrix(_current_matrix)());
 }
 
 void Iw2DSetFont(const CIw2DFont *f) {
@@ -681,12 +697,19 @@ void Iw2DSetColour(const uint32 color) {
 
 void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign) {
 
-  float x = topLeft.x;
-  float y = topLeft.y;
   const float w = _current_font->GetCharW();
   const float h = _current_font->GetCharH();
   const float uwid = _current_font->GetMaxS()/_current_font->GetNumChars();
   const float vwid = _current_font->GetMaxT();
+
+  float x = topLeft.x;
+  float y = topLeft.y;
+  if (horzAlign == IW_2D_FONT_ALIGN_CENTRE) {
+    x += (size.x - w) / 2.;
+  }
+  if (vertAlign == IW_2D_FONT_ALIGN_CENTRE) {
+    y += (size.y - h) / 2.;
+  }
 
   string line = text;
 
@@ -696,11 +719,14 @@ void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFont
     fprintf( stderr, "[Iw2DDrawString] This part is fine and will be processed: %s.\n", string(line.begin(), end_it).c_str() );
   }
   utf8::iterator<string::iterator> it (line.begin(), line.begin(), end_it);
+  glBindTexture(GL_TEXTURE_2D, _current_font->GetTexture());
   int index = 0; while(it.base()!=end_it) {
-    uint32_t ch = *it;
+    const uint32_t ch = *it;
 
-    float uofs = 0;
-    float vofs = 0;
+    const int index = _current_font->GetCharIndex(ch);
+
+    const float uofs = index * uwid;
+    const float vofs = 0;
 
     struct _v2c4 {
       GLfloat v[2];
@@ -708,15 +734,16 @@ void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFont
       uint32_t c;
     } vertices[] = {
       { {x, y}, {uofs, vofs}, _current_color },
-      { {x,y+h}, {uofs, vofs + vwid}, _current_color },
-      { {x+w,y}, {uofs + uwid, vofs}, _current_color },
-      { {x+w,y+h}, {uofs + uwid, vofs + vwid}, _current_color },
+      { {x, y+h}, {uofs, vofs + vwid}, _current_color },
+      { {x+w, y}, {uofs + uwid, vofs}, _current_color },
+      { {x+w, y+h}, {uofs + uwid, vofs + vwid}, _current_color },
     };
-    glBindTexture(GL_TEXTURE_2D, _current_font->GetTexture());
     glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
     glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
     glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    it++; x += w;
   }
 }
 
@@ -739,9 +766,9 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
     uint32_t c;
   } vertices[] = {
     { {x, y}, {uofs, vofs}, _current_color },
-    { {x,y+h}, {uofs, vofs + vwid}, _current_color },
-    { {x+w,y}, {uofs + uwid, vofs}, _current_color },
-    { {x+w,y+h}, {uofs + uwid, vofs + vwid}, _current_color },
+    { {x, y+h}, {uofs, vofs+vwid}, _current_color },
+    { {x+w, y}, {uofs+uwid, vofs}, _current_color },
+    { {x+w, y+h}, {uofs+uwid, vofs+vwid}, _current_color },
   };
   glBindTexture(GL_TEXTURE_2D, img->GetTexture());
   glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
@@ -751,8 +778,71 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
 }
 
 void Iw2DClearScreen(const uint32 color) {
-  glClearColor(ABGR_RED2F(color), ABGR_GREEN2F(color), ABGR_BLUE2F(color), ABGR_ALPHA2F(color));
-  glClear(GL_COLOR_BUFFER_BIT);
+#ifdef __PLAYBOOK__
+
+  static float mx = 0, my = 0;
+  static int cnt = 0;
+  CIwMat2D m;
+
+  if (_curr_letterbox_bg) {
+    glClearColor(0., 0., 0., 1.);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    glPushMatrix();
+    glLoadIdentity();
+    //
+    CcIw2DImage* img = _curr_letterbox_bg;
+    const float uwid = img->GetMaxS();
+    const float vwid = img->GetMaxT();
+
+    const float sh2 = screen_height/2.;
+    const float sw2 = screen_width/2.;
+    const int maxAlpha = 64;
+
+    const float rotSpeed = 0.005;
+    const float alphaChangeSpeed = 0.01;
+    const float horizSizeChangeSpeed = 0.01;
+    const float vertSizeChangeSpeed = 0.015;
+
+    const uint32_t alpha = (uint8_t(maxAlpha*fabs(sinf(cnt*alphaChangeSpeed))) << 24) | 0x00ffffff;
+    const float absmx = fabs(mx);
+    const float absmy = fabs(my);
+    struct _v2c4 {
+      GLfloat v[2];
+      GLfloat t[2];
+      uint32_t c;
+    } vertices[] = {
+      // background:
+      { {0, 0}, {0, 0}, 0x80ffffff },
+      { {0, screen_height}, {0, vwid}, 0x80ffffff },
+      { {screen_width, 0}, {uwid, 0}, 0x80ffffff },
+      { {screen_width, screen_height}, {uwid, vwid}, 0x80ffffff },
+      // moving layer:
+      { {-absmx, my}, {0, 0}, alpha },
+      { {-absmx, screen_height+absmy}, {0, vwid}, alpha },
+      { {screen_width+absmx, my}, {uwid, 0}, alpha },
+      { {screen_width+absmx, screen_height+absmy}, {uwid, vwid}, alpha },
+    };
+    glBindTexture(GL_TEXTURE_2D, img->GetTexture());
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
+    glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
+    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
+    // moving layer:
+    glLoadMatrixf(AffineTransform::matrix(m.Rotation(cnt*rotSpeed, sw2, sh2))());
+    glDrawArrays(GL_TRIANGLE_STRIP, 4, 4);
+    //
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);    
+    glPopMatrix();
+    ++cnt; 
+    mx = sw2 + sw2*fabs(sinf(cnt*horizSizeChangeSpeed)); my = 75+10*sinf(cnt*vertSizeChangeSpeed);
+  } else
+#endif
+    {
+      glClearColor(ABGR_RED2F(color), ABGR_GREEN2F(color), ABGR_BLUE2F(color), ABGR_ALPHA2F(color));
+      glClear(GL_COLOR_BUFFER_BIT);
+    }
 }
 
 void Iw2DInit() {
@@ -774,19 +864,21 @@ void Iw2DInit() {
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 16);
   
    const bool fullscreen = true;
-   Uint32 bits = 32, flags = SDL_OPENGL, width =  _GetDevWidth(), height = _GetDevHeight();
+   Uint32 bits = 32, flags = SDL_OPENGL, width =  screen_width, height = screen_height;
 
     if (SDL_SetVideoMode(width, height, bits, flags) == NULL) {
       fprintf(stderr, "Failed to create main GL window!\n");
       exit(1);
     }
     SDL_WM_SetCaption("SkeletonKey", "opengl");
+
     glViewport(0, 0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho(0, width, height, 0, -1, 1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     glDisable(GL_DEPTH_TEST);
     glDepthFunc(GL_DONT_CARE);
     glEnable(GL_TEXTURE_2D);
@@ -827,3 +919,86 @@ void Iw2DFinishDrawing() {
   fflush(stdout);
 #endif
 }
+
+// ----- IwResManager -----
+
+void IwGetResManagerS::LoadGroup(const char *grp) {
+    group = grp; 
+    // look for playbook background:
+#if ENABLE_ANIM_BG
+    _curr_letterbox_bg = _letterbox_bg[grp];
+    if (_curr_letterbox_bg == NULL) {
+      string bg = "playbook_blur_background_wood.png";
+      if (strcmp(grp, "achievements.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "instructions.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "nag.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "game.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "map.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "options.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      } else if (strcmp(grp, "game_menu.group") == 0) {
+	bg = "playbook_blur_background_forest_light.png";
+      } else if (strcmp(grp, "menu.group") == 0) {
+	bg = "playbook_blur_background_forest_light.png";
+      } else if (strcmp(grp, "select_level.group") == 0) {
+	bg = "playbook_blur_background_wood.png";
+      }
+
+      if (resourceExists(f_ssprintf("graphics/backgrounds/%s", bg.c_str()))) {
+	const char *path = resourcePath(f_ssprintf("graphics/backgrounds/%s", bg.c_str()));
+	_curr_letterbox_bg = _letterbox_bg[grp] = new CcIw2DImage(path);
+      }
+    }
+#endif
+}
+
+// -- Scoreboard support
+
+#define SCORE_SUBMIT_ACTION  1
+#define SCORE_RETRIVE_ACTION 2
+
+static void _process_score_queue(void);
+
+static SC_Client_h score_client = 0;
+static SC_InitData_t initData;
+
+#define SC_NUM_MODES 3 // 3 skills levels
+
+static struct ScoreGetCmd {
+    const int type;
+    SC_Status status;
+    SC_Error_t error_status;
+    SC_ScoreList_h list;
+    SC_ScoresController_h controller;
+    SC_Callback callback;
+    ScoreGetCmd():type(SCORE_RETRIVE_ACTION),status(SC_STATUS_NONE),error_status(SC_OK),callback(NULL) { }
+} scores[SC_NUM_MODES];
+static struct ScoreSubmitCmd {
+    const int type;
+    SC_Status status;
+    SC_Error_t error_status;
+    SC_Score_h score;
+    void *payload;
+    SC_ScoresController_h controller;
+    SC_Callback callback;
+    ScoreSubmitCmd():type(SCORE_SUBMIT_ACTION),status(SC_STATUS_NONE),error_status(SC_OK),payload(NULL),callback(NULL) { }
+} score_submit;
+
+#define SCORE_CHECK_ERR(code) if(SC_Error_t _err = (code)) { fprintf(stderr, "^^ %s failed at line %d with error code: %d.\n", __FUNCTION__, __LINE__, _err); return false; }
+
+#define QUEUE_STR_LEN 32
+#define QUEUE_FILE writePath("slqueues.db")
+static DArray score_queue;
+static int live_requests = 0;
+typedef struct {
+  double result; // time
+  unsigned int mode;
+  double minor_result; // numer of moves
+  unsigned int level;
+} QueuedScore;
+

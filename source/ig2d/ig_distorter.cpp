@@ -1,4 +1,5 @@
 #include "ig_distorter.h"
+#include "config.h"
 
 IGDistorter* IGDistorter::instance = NULL;
 
@@ -37,8 +38,14 @@ void IGDistorter::shutdown() {
 }
 
 void IGDistorter::set(float _designWidth, float _designHeight) {
-	designWidth = _designWidth;
-	designHeight = _designHeight;
+	float shrink = 0;
+	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_PLAYBOOK) {
+	  // make the game field smaller instead of filling the space
+	  shrink = 1.8; // 20%
+	}
+
+	designWidth = shrink * _designWidth;
+	designHeight = shrink * _designHeight;
 
 	// make sure we're dealing with portrait or landscape
 	if(designWidth > designHeight) {
@@ -54,7 +61,7 @@ void IGDistorter::set(float _designWidth, float _designHeight) {
 			screenHeight = tmp;
 		}
 	}
-	
+
 	float designAspectRatio = designWidth / designHeight;
 	float screenAspectRation = screenWidth / screenHeight;
 	if(designAspectRatio == screenAspectRation) {
@@ -67,8 +74,8 @@ void IGDistorter::set(float _designWidth, float _designHeight) {
 		offsetY = 0;
 	} else {
 		multiply = screenWidth / designWidth;
-		offsetX = 0;
-		offsetY = ((screenHeight/multiply) - designHeight) / 2;
+		offsetX = (designWidth - _designWidth) / 2;
+		offsetY = ((designHeight - _designHeight) + (screenHeight/multiply) - designHeight) / 2;
 	}
 
 	char debugStr[200];

@@ -19,9 +19,21 @@ do
 	    ;;
 	playbook*)
 	    PLAT="/Developer/SDKs/bbndk-2.1.0/bbndk-env.sh"
+	    if grep --quiet "$PLAT" CMakeCache.txt; then
+		echo "** Config unchanged."
+	    else
+		echo "** Force to reconfigure build."
+		rm -rf cmake.ts CMakeCache.txt CMakeFiles
+	    fi
 	    ;;
 	bb10*)
 	    PLAT="/Developer/SDKs/bbndk/bbndk-env.sh"
+	    if grep --quiet "$PLAT" CMakeCache.txt; then
+		echo "** Config unchanged."
+	    else
+		echo "** Force to reconfigure build."
+		rm -rf cmake.ts CMakeCache.txt CMakeFiles
+	    fi
 	    ;;
 	run*)
 	    TARGET="run"

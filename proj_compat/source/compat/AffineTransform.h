@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include <stdio.h>
 
 namespace scalar
 {
@@ -87,6 +88,12 @@ namespace affinetransform
 			y += b * v.x + d * v.y;
 		}
 
+		void translate(const T mx, const T my)
+		{
+			x += a * mx + c * my;
+			y += b * mx + d * my;
+		}
+
 		void scale(const vector2 &v)
 		{
 			a *= v.x;
@@ -103,13 +110,38 @@ namespace affinetransform
 			d *= v;
 		}
 
-		void rotate(T v)
+		void rotate(const T v)
 		{
-			T sin_ = scalar::sin(v);
-			T cos_ = scalar::cos(v);
+			const T sin_ = scalar::sin(v);
+			const T cos_ = scalar::cos(v);
 
 			affineTransform rot(cos_, sin_, -sin_, cos_, 0, 0);
 			*this = *this * rot;
+		}
+
+		affineTransform rotation(const T v) const
+		{
+			const T sin_ = scalar::sin(v);
+			const T cos_ = scalar::cos(v);
+
+			return affineTransform(cos_, sin_, -sin_, cos_, 0, 0);
+		}
+
+		void rotate(const T v, const T pivotX, const T pivotY)
+		{
+			const T cos_ = scalar::cos(v);
+			const T sin_ = scalar::sin(v);
+
+			affineTransform rot(cos_, sin_, -sin_, cos_, -cos_ * pivotX + sin_ * pivotY + pivotX, -sin_ * pivotX + -cos_ * pivotY + pivotY);
+			*this = *this * rot;
+		}
+
+		affineTransform rotation(const T v, const T pivotX, const T pivotY) const
+		{
+			const T cos_ = scalar::cos(v);
+			const T sin_ = scalar::sin(v);
+
+			return affineTransform(cos_, sin_, -sin_, cos_, -cos_ * pivotX + sin_ * pivotY + pivotX, -sin_ * pivotX + -cos_ * pivotY + pivotY);
 		}
 
 		void invert()
@@ -128,16 +160,16 @@ namespace affinetransform
 
 		operator matrix() const
 		{
-			return matrix
-				(
-				a, b, 0, 0,
-				c, d, 0, 0,
-				0, 0, 1, 0,
-				x, y, 0, 1
-				);
+		  // create matrix from given
+		  // series of ROWS:
+		  return matrix
+		  (
+		   a, c, 0, x,
+		   b, d, 0, y,
+		   0, 0, 1, 0,
+		   0, 0, 0, 1
+		  );
 		}
-
-
 
 		affineTransform operator * (const affineTransform &t2) const
 		{
@@ -160,6 +192,10 @@ namespace affinetransform
 				b * v.x + d * v.y + y);
 		}
 
+		void description() {
+		  printf("a:%0.3f c:%0.3f x:%0.3f\n", float(a), float(c), float(x));
+		  printf("b:%0.3f d:%0.3f y:%0.3f\n", float(b), float(d), float(y));
+		}
 
 		T a, b, c, d;
 		T x, y;

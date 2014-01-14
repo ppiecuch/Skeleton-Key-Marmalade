@@ -2,6 +2,7 @@
 #define __compat_iwresmanager_h__
 
 #include <stdio.h>
+#include <string>
 
 void IwResManagerInit();
 inline static void IwResManagerTerminate() { }
@@ -14,7 +15,8 @@ struct IwGetResManagerS;
 
 static struct IwGetResManagerS 
 {
-  void LoadGroup(const char *grp) { }
+  std::string group;
+  void LoadGroup(const char *grp);
   int GetNumGroups() { return 0; }
   CIwResGroup *GetGroup(int index) { return NULL; }
   void DestroyGroup(CIwResGroup *g) { }

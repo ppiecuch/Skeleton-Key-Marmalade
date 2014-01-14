@@ -114,6 +114,11 @@ int s3eSoundGetFreeChannel();
 const char* s3eSoundGetErrorString();
 void s3eSoundSetInt(s3eEnum f, int v);
 
+/// Leaderboard support
+typedef void* OBE_ScoreList;
+typedef void (*SC_Callback)(int, OBE_ScoreList); // request callback: mode, scores list
+enum SC_Status { SC_STATUS_NONE, SC_STATUS_BUSY, SC_STATUS_ERROR, SC_STATUS_DIRTY, SC_STATUS_DONE };
+
 /// Utility macros:
 #define f_ssprintf(...)                                 \
     ({ int _ss_size = snprintf(0, 0, ##__VA_ARGS__);    \

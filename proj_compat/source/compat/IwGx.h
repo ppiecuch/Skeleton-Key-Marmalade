@@ -29,8 +29,17 @@ typedef affinetransform::AffineTransformT<float> AffineTransform;
 class CIwMat2D : public AffineTransform
 {
  public:
-  void SetIdentity() { identity(); }
-  void Scale(float sc) { scale(sc); }
+  CIwMat2D() { }
+  CIwMat2D(const AffineTransform &m) : AffineTransform(m) { }
+  CIwMat2D &SetIdentity() { identity(); return *this; }
+  CIwMat2D &Scale(float sc) { scale(sc); return *this; }
+  CIwMat2D &Rotate(float rt) { rotate(rt); return *this; }
+  CIwMat2D &Rotate(float rt, float cx, float cy) { rotate(rt, cx, cy); return *this; }
+  CIwMat2D Rotation(float rt, float cx, float cy) const { return CIwMat2D(rotation(rt, cx, cy)); }
+  CIwMat2D &Translate(float mx, float my) { translate(mx, my); return *this; }
+
+  static const CIwMat2D Identity;
+
 };
 
 #endif /* __compat_iwgx_h__ */

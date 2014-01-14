@@ -1202,6 +1202,8 @@ unsigned int
 			img = resampled;
 			width = new_width;
 			height = new_height;
+			
+			printf("[SOIL] resampled image to: %dx%d.\n", width, height);
 		}
 	}
 	/*	now, if it is too large...	*/

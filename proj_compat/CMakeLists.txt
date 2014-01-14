@@ -302,6 +302,7 @@ set( SkeletonKey_Src_Files
     	${SOURCE_ROOT}/sqlite3/sqlite3ext.h
     	${SOURCE_ROOT}/sqlite3/sqlite3.c
 	## (compat)
+    	${LOCAL_SOURCE_ROOT}/compat/AffineTransform.h
     	${LOCAL_SOURCE_ROOT}/compat/IwGx.h
     	${LOCAL_SOURCE_ROOT}/compat/Iw2D.h
     	${LOCAL_SOURCE_ROOT}/compat/IwResManager.h
@@ -404,6 +405,11 @@ SET(SkeletonKey_Data_Files
 	graphics/backgrounds/background_forest_dark.png
 	graphics/backgrounds/background_forest_light.png
 	graphics/backgrounds/background_wood.png
+	graphics/backgrounds/playbook_blur_background_forest_dark.png
+	graphics/backgrounds/playbook_blur_background_wood.png
+	graphics/backgrounds/playbook_blur_background_forest_light.png
+	graphics/backgrounds/playbook/background_forest_dark.png
+	graphics/backgrounds/playbook/background_forest_light.png
 	#
 	graphics/game/game_achievement.png
 	graphics/game/game_background_beach.png
@@ -534,6 +540,7 @@ SET(SkeletonKey_Data_Files
 	graphics/map/map_lock4.png
 	graphics/map/map_lock5.png
 	graphics/map/map_select_destination.png
+	graphics/map/playbook/map_background.png
 	#
 	graphics/menu/menu_achievements.png
 	graphics/menu/menu_achievements2.png
