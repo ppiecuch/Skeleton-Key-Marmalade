@@ -54,6 +54,7 @@ struct CIwGxFont
 #include "fonts/font_algerian_24.h"
 #include "fonts/font_gabriola_16b.h"
 
+#include "TileSetUtility.h"
 
 using std::string;
 using std::vector;
@@ -529,6 +530,13 @@ public:
     // create texture:
     maxs = maxt = 1;
 
+    // calculate char glyph regions:
+    BufferedImage img(idata, width, height);
+    ArrayRegions rc = TileSetUtilityRGBA::inferNumberColumns(img);
+    ArrayRegions rr = TileSetUtilityRGBA::inferNumberRows(img);
+    std::vector<TileCoord> tiles = TileSetUtilityRGBA::getTiles(img, rc, rr);
+    printf("CcIw2DFont image %s: %d regions.\n", font.image, tiles.size());
+
     char_w = (float)width/(float)num;
     char_h = height;
 
@@ -597,8 +605,9 @@ private:
   std::string error;
   uint texture;
   float maxt, maxs;
+  const bool native;
 public:
-  CcIw2DImage(const char* from_file) : texture(0), maxs(0), maxt(0) {
+  CcIw2DImage(const char* from_file, bool native = false) : texture(0), maxs(0), maxt(0), native(native) {
 
     file = from_file;
 
@@ -635,6 +644,7 @@ public:
   uint GetTexture() const { return texture; }
   float GetMaxS() const { return maxs; }
   float GetMaxT() const { return maxt; }
+  bool IsNative() const { return native; }
 };
 
 static map<string, CcIw2DImage*> _letterbox_bg;
@@ -645,23 +655,29 @@ CIw2DImage* Iw2DCreateImageResource(const char* resource)
   const char *_search[] = { 
     "", 
 #ifdef __PLAYBOOK__
-    "graphics/backgrounds/playbook/",
+    "*graphics/backgrounds/playbook/",
 #endif
     "graphics/backgrounds/",
     "graphics/menu/",
+#ifdef __PLAYBOOK__
+    "graphics/map/playbook/",
+#endif
     "graphics/map/",
     "graphics/options/",
     "graphics/achievements/",
     "graphics/select_level/",
     NULL };
-  const char *path = NULL;
-  for(char **p=(char**)_search; *p != NULL; p++)
-    if (resourceExists(f_ssprintf("%s%s.png", *p, resource))) {
-      path = resourcePath(f_ssprintf("%s%s.png", *p, resource));
+  const char *path = NULL; bool native = false;
+  for(char **p=(char**)_search; *p != NULL; p++) {
+    const char *pp = (**p=='*')?(*p+1):*p; // skip *
+    if (resourceExists(f_ssprintf("%s%s.png", pp, resource))) {
+      path = resourcePath(f_ssprintf("%s%s.png", pp, resource));
+      native = (**p=='*');
       break;
     }
+  }
   if (path) {
-    return new CcIw2DImage(path);
+    return new CcIw2DImage(path, native);
   } else {
     fprintf(stderr, "*** Resource image %s not found.\n", resource);
     return NULL;
@@ -774,7 +790,13 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
   glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
   glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
   glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
+  if (img->IsNative()) {
+    glPushMatrix(); // remove any transformations
+    glLoadIdentity();
+  }
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
+  if (img->IsNative())
+    glPopMatrix();
 }
 
 void Iw2DClearScreen(const uint32 color) {

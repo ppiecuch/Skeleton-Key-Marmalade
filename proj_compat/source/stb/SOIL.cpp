@@ -42,6 +42,8 @@ static inline uint8_t clamp_8bit(int val)
       return (uint8_t)val;
 }
 
+inline static BOOL is_pow2(int a) { return((a & -a) == a); };
+
 #if defined(SCALER_NO_SIMD) || !defined(WIN32)
 #undef __SSE2__
 #endif
@@ -51,7 +53,7 @@ static inline uint8_t clamp_8bit(int val)
 #endif
 
 // default clamp mode:
-#define GL_CLAMP_MODE GL_REPEAT
+#define GL_CLAMP_MODE GL_CLAMP_TO_EDGE
 
 /*	error reporting	*/
 const char *result_string_pointer = "SOIL initialized";
@@ -1425,7 +1427,10 @@ unsigned int
 		#endif
 
 		/*	does the user want clamping, or wrapping?	*/
-		if( flags & SOIL_FLAG_TEXTURE_REPEATS )
+			if( flags & SOIL_FLAG_TEXTURE_REPEATS 
+			    // force clamp for npot textures (gl es):
+			    && is_pow2(width) && is_pow2(height)
+			    )
 		{
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_S, GL_REPEAT );
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_T, GL_REPEAT );
@@ -1435,7 +1440,9 @@ unsigned int
 			}
 			check_for_GL_errors( "GL_TEXTURE_WRAP_*_REPEAT" );
 		} else {
-			unsigned int clamp_mode = GL_CLAMP;
+			if( flags & SOIL_FLAG_TEXTURE_REPEATS )
+			  fprintf(stderr, "** Forcing CLAMP mode for npot texture size (%dx%d).\n", width, height);
+			unsigned int clamp_mode = GL_CLAMP_MODE;
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_S, clamp_mode );
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_T, clamp_mode );
 			if( opengl_texture_type == SOIL_TEXTURE_CUBE_MAP ) {
@@ -1882,7 +1889,6 @@ unsigned int SOIL_direct_load_DDS_from_memory(
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_T, GL_REPEAT );
 			glTexParameterf( opengl_texture_type, SOIL_TEXTURE_WRAP_R, GL_REPEAT );
 		} else {
-			/*	unsigned int clamp_mode = SOIL_CLAMP_TO_EDGE;	*/
 			unsigned int clamp_mode = GL_CLAMP_MODE;
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_S, clamp_mode );
 			glTexParameterf( opengl_texture_type, GL_TEXTURE_WRAP_T, clamp_mode );

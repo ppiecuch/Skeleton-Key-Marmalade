@@ -41,7 +41,7 @@ void IGDistorter::set(float _designWidth, float _designHeight) {
 	float shrink = 0;
 	if(AIRPLAY_DEVICE == AIRPLAY_DEVICE_PLAYBOOK) {
 	  // make the game field smaller instead of filling the space
-	  shrink = 1.8; // 20%
+	  shrink = 1.4;
 	}
 
 	designWidth = shrink * _designWidth;
