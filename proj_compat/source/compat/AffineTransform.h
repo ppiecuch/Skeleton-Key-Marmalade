@@ -58,7 +58,7 @@ namespace affinetransform
 		typedef Matrix4 matrix;
 		typedef AffineTransformT<T> affineTransform;
 
-		AffineTransformT(){}
+		AffineTransformT():a(1), b(0), c(0), d(1), x(0), y(0){}
 		AffineTransformT(T a_, T b_, T c_, T d_, T x_, T y_):a(a_), b(b_), c(c_), d(d_), x(x_), y(y_){}
 
 
@@ -110,6 +110,11 @@ namespace affinetransform
 			d *= v;
 		}
 
+		affineTransform scaling(const T v)
+		{
+			affineTransform rot(v, 0, 0, v, 0, 0);
+		}
+
 		void rotate(const T v)
 		{
 			const T sin_ = scalar::sin(v);
@@ -156,6 +161,20 @@ namespace affinetransform
 			d = det * t.a;
 			x = det * (t.c * t.y - t.d * t.x);
 			y = det * (t.b * t.x - t.a * t.y);
+		}
+
+		affineTransform inverted()
+		{
+			const affineTransform &t = *this;
+
+			T det = T(1) / (t.a * t.d - t.b * t.c);
+
+			return affineTransform( det * t.d,
+						-det * t.b,
+						-det * t.c,
+						det * t.a,
+						det * (t.c * t.y - t.d * t.x),
+						det * (t.b * t.x - t.a * t.y) );
 		}
 
 		operator matrix() const

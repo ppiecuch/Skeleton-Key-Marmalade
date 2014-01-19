@@ -1202,10 +1202,11 @@ unsigned int
 			/*	nuke the old guy, then point it at the new guy	*/
 			SOIL_free_image_data( img );
 			img = resampled;
+
+			printf("[SOIL] resampled image from %dx%d to: %dx%d.\n", width, height, new_width, new_height);
+
 			width = new_width;
-			height = new_height;
-			
-			printf("[SOIL] resampled image to: %dx%d.\n", width, height);
+			height = new_height;			
 		}
 	}
 	/*	now, if it is too large...	*/

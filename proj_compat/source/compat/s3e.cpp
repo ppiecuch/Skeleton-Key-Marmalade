@@ -33,6 +33,8 @@
 # include <AL/al.h>
 # include "_bb_simple_audio_engine.h"
 
+#include "../../source/ig2d/ig_distorter.h"
+
 #define _audio audio::SimpleAudioEngine::sharedEngine()
 
 #endif
@@ -483,15 +485,14 @@ void s3eSoundSetInt(s3eEnum f, int v) {
 
 class CcIw2DFont : public CIw2DFont
 {
-  int num;
+  int width, height, num;
   uint16 asciimap[256];
   map<uint, uint16> utf8map;
   const CIwGxFont &descr;
   uint texture;
-  float maxs, maxt;
-  float char_w, char_h;
+  std::vector<TileCoord> regions;
 public:
-  CcIw2DFont(const CIwGxFont &font) : texture(0), maxs(0), maxt(0), num(0), char_w(0), char_h(0), descr(font)
+  CcIw2DFont(const CIwGxFont &font) : texture(0), num(0), descr(font)
   {
     string line = font.charmap;
     // process utf8 characters
@@ -513,7 +514,7 @@ public:
 
     num = index;
 
-    int width, height, channels;
+    int channels;
     const int force_channels = 0;
 
     // try to read raw data:
@@ -527,39 +528,42 @@ public:
       return;
     }
 
-    // create texture:
-    maxs = maxt = 1;
-
     // calculate char glyph regions:
     BufferedImage img(idata, width, height);
     ArrayRegions rc = TileSetUtilityRGBA::inferNumberColumns(img);
     ArrayRegions rr = TileSetUtilityRGBA::inferNumberRows(img);
-    std::vector<TileCoord> tiles = TileSetUtilityRGBA::getTiles(img, rc, rr);
-    printf("CcIw2DFont image %s: %d regions.\n", font.image, tiles.size());
+    regions = TileSetUtilityRGBA::getTiles(img, rc, rr);
+    printf("CcIw2DFont image %s: %d regions.\n", font.image, regions.size());
+    if (num != regions.size())
+      fprintf(stderr, "CcIw2DFont image %s: diffrent number of regions and characters: %d<>%d.\n", font.image, regions.size(), num);
 
-    char_w = (float)width/(float)num;
-    char_h = height;
-
-    texture = SOIL_create_OGL_texture2(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
+    texture = SOIL_create_OGL_texture(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
     free(idata);
 
-    printf("CcIw2DFont image %s: texture %d, dim. %dx%d, tex. %fx%f\n", font.image, texture, width, height, maxs, maxt);
+    printf("CcIw2DFont image %s: texture %d, dim. %dx%d\n", font.image, texture, width, height);
   }
 
   uint GetTexture() const { return texture; }
-  float GetMaxS() const { return maxs; }
-  float GetMaxT() const { return maxt; }
-  float GetCharW() const { return char_w; }
-  float GetCharH() const { return char_h; }
-  int GetNumChars() const { return num; }
   //  not_found_ch : not found character placeholder
-  int GetCharIndex(uint ch, char not_found_ch = '?') {
-    if (ch < 256)
-      return asciimap[ch];
+  const TileCoord &GetTextureRegion(uint ch, char not_found_ch = '?') {
+    int index = 0; if (ch < 256)
+      index = asciimap[ch];
     else if (utf8map.count(ch))
-      return utf8map[ch];
-    else return asciimap[not_found_ch];
+      index = utf8map[ch];
+    else index = asciimap[not_found_ch];
+    return regions[index];
   }
+  TileTextureCoord GetTextureCoord(uint ch, char not_found_ch = '?') {
+    int index = 0; if (ch < 256)
+      index = asciimap[ch];
+    else if (utf8map.count(ch))
+      index = utf8map[ch];
+    else index = asciimap[not_found_ch];
+    const TileCoord &coord = regions[index];
+    const float w = width, h = height;
+    return (TileTextureCoord){coord.x1/w, coord.y1/h, coord.x2/w, coord.y2/h};
+  }
+  int GetNumChars() const { return num; }
 };
 
 static map<string, CcIw2DFont*> _fonts;
@@ -631,7 +635,7 @@ public:
 
     maxs = maxt = 1;
 
-    printf("CcIw2DImage image %s: texture %d, dim. %dx%d, tex. %fx%f\n", from_file, texture, width, height, maxs, maxt);
+    printf("CcIw2DImage image %s: texture %d, dim. %dx%d, img. %dx%d, tex. %fx%f\n", from_file, texture, width, height, size.x, size.y, maxs, maxt);
   }
   virtual float GetWidth() { return size.x; }
   virtual float GetHeight()  { return size.y; }
@@ -711,20 +715,35 @@ void Iw2DSetColour(const uint32 color) {
   _current_color = color;
 }
 
+std::pair<int,int> _text_size(const char* text) {
+  string line = text;
+
+  const string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
+  if (end_it != line.end()) {
+    fprintf( stderr, "[_text_size] Invalid UTF-8 encoding detected.\n" );
+    fprintf( stderr, "[_text_size] This part is fine and will be processed: %s.\n", string(line.begin(), end_it).c_str() );
+  }
+  utf8::iterator<string::iterator> it (line.begin(), line.begin(), end_it);
+  int index = 0, len = 0, height = 0; while(it.base()!=end_it) {
+    const uint32_t ch = *it;
+    const TileCoord &box = _current_font->GetTextureRegion(ch);
+    len += box.x2-box.x1; const int h = box.y2-box.y1; if ( h > height ) height = h;
+    it++; 
+  }
+  return std::pair<int,int>(len,height);
+}
+
 void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign) {
 
-  const float w = _current_font->GetCharW();
-  const float h = _current_font->GetCharH();
-  const float uwid = _current_font->GetMaxS()/_current_font->GetNumChars();
-  const float vwid = _current_font->GetMaxT();
+  const std::pair<int,int> &sz = _text_size(text);
 
   float x = topLeft.x;
   float y = topLeft.y;
   if (horzAlign == IW_2D_FONT_ALIGN_CENTRE) {
-    x += (size.x - w) / 2.;
+    x += (size.x - sz.first) / 2.;
   }
   if (vertAlign == IW_2D_FONT_ALIGN_CENTRE) {
-    y += (size.y - h) / 2.;
+    y += (size.y - sz.second) / 2.;
   }
 
   string line = text;
@@ -739,20 +758,21 @@ void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFont
   int index = 0; while(it.base()!=end_it) {
     const uint32_t ch = *it;
 
-    const int index = _current_font->GetCharIndex(ch);
-
-    const float uofs = index * uwid;
-    const float vofs = 0;
+    const TileTextureCoord &coord = _current_font->GetTextureCoord(ch);
+    const TileCoord &box = _current_font->GetTextureRegion(ch);
+    
+    const int h = box.y2 - box.y1;
+    const int w = box.x2 - box.x1;
 
     struct _v2c4 {
       GLfloat v[2];
       GLfloat t[2];
       uint32_t c;
     } vertices[] = {
-      { {x, y}, {uofs, vofs}, _current_color },
-      { {x, y+h}, {uofs, vofs + vwid}, _current_color },
-      { {x+w, y}, {uofs + uwid, vofs}, _current_color },
-      { {x+w, y+h}, {uofs + uwid, vofs + vwid}, _current_color },
+      { {x, y}, {coord.x1, coord.y1}, _current_color },
+      { {x, y+h}, {coord.x1, coord.y2}, _current_color },
+      { {x+w, y}, {coord.x2, coord.y1}, _current_color },
+      { {x+w, y+h}, {coord.x2, coord.y2}, _current_color },
     };
     glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
     glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
@@ -767,8 +787,8 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
 
   CcIw2DImage* img = dynamic_cast<CcIw2DImage*>(image);
 
-  const float x = topLeft.x;
-  const float y = topLeft.y;
+  const float x = topLeft.x + (img->IsNative()?IGDistorter::getInstance()->offsetX:0);
+  const float y = topLeft.y + (img->IsNative()?IGDistorter::getInstance()->offsetY:0);
   const float w = size.x;
   const float h = size.y;
   float uofs = 0;
@@ -791,7 +811,8 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
   glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
   glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
   if (img->IsNative()) {
-    glPushMatrix(); // remove any transformations
+    glPushMatrix(); // reverse any transformations
+    //glMultMatrixf(AffineTransform::matrix(_current_matrix.inverted())());
     glLoadIdentity();
   }
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
