@@ -34,8 +34,8 @@ void Iw2DFinishDrawing();
 uint32 Iw2DGetSurfaceHeight();
 uint32 Iw2DGetSurfaceWidth();
 void Iw2DSetTransformMatrix(const CIwMat2D &m);
-void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign);
-void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size);
+void Iw2DDrawString(const char* text, CIwSVec2 topLeft, CIwSVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign);
+void Iw2DDrawImage(CIw2DImage* image, CIwSVec2 topLeft, CIwSVec2 size);
 void Iw2DSetFont(const CIw2DFont *f);
 void Iw2DSetColour(const uint32 color);
 #ifdef __S3E__

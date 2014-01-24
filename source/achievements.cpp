@@ -2,10 +2,11 @@
 #include "ig2d/ig_global.h"
 #include "sounds.h"
 
-Achievement::Achievement(std::string _name, std::string _description, bool _achieved) {
+Achievement::Achievement(std::string _name, std::string _description, bool _achieved, int _sec) {
 	name = _name;
 	description = _description;
 	achieved = _achieved;
+	sec = _sec;
 }
 
 Achievements* Achievements::instance = NULL;
@@ -52,7 +53,7 @@ Achievement Achievements::getAchievement(int achievementId) {
 	// get data from database
 	SQLite3Wrapper db("achievements.db");
 	char buffer[100];
-	sprintf(buffer, "SELECT name,description,achieved FROM achievement WHERE num='%i';", achievementId);
+	sprintf(buffer, "SELECT name,description,achieved,seconds FROM achievement WHERE num='%i';", achievementId);
 	db.exe(buffer);
 	std::vector<std::string>::iterator i = db.vdata.begin();
 	std::string stringName = *i;
@@ -64,9 +65,12 @@ Achievement Achievements::getAchievement(int achievementId) {
 	bool boolAchieved = false;
 	if(intAchieved)
 		boolAchieved = true;
+	++i;
+	std::string stringSeconds = *i;
+	int intSeconds = atoi(stringSeconds.c_str());
 
 	// turn it into an Achievement object
-	return Achievement(stringName, stringDescription, boolAchieved);
+	return Achievement(stringName, stringDescription, boolAchieved, intSeconds);
 }
 
 void Achievements::resetAchievements() {
@@ -74,7 +78,7 @@ void Achievements::resetAchievements() {
 		achieved[i] = false;
 	}
 	SQLite3Wrapper achievementsDB("achievements.db");
-	achievementsDB.exe(std::string("UPDATE achievement SET achieved='0'; UPDATE achievement_data SET doors_opened='0',perfect_levels='0',consecutive_levels='0';"));
+	achievementsDB.exe(std::string("UPDATE achievement SET achieved='0', seconds='0'; UPDATE achievement_data SET doors_opened='0',perfect_levels='0',consecutive_levels='0';"));
 }
 
 void Achievements::load() {

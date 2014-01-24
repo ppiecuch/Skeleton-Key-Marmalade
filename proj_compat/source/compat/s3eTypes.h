@@ -56,7 +56,7 @@ typedef signed int s3e_int32_t;
  * @name C99 fixed-width data types, based on s3e types
  */
 /** @{ */
-#ifdef I3D_OS_NACL
+#if defined I3D_OS_NACL || defined __QNXNTO__
 #include <stdint.h>
 #else
 typedef s3e_uint64_t uint64_t;

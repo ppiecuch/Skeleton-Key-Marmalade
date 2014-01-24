@@ -182,7 +182,7 @@ if [ `uname` == "Darwin" ] ; then
         $CMAKE_EXTRA_OPTIONS"
 fi
 
-sdl_root="$HOME/Software/SDL-1/dist/playbook/"
+sdl_root="$HOME/Software/SDL-1/dist/"
 if [ ! -d $sdl_root ]; then
     echo "** SDL installation not found at $sdl_root"
     exit

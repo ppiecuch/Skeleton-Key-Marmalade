@@ -26,10 +26,11 @@ typedef enum {
 
 class Achievement {
 public:
-	Achievement(std::string _name, std::string _description, bool _achieved);
+  Achievement(std::string _name, std::string _description, bool _achieved, int _sec);
 	std::string name;
 	std::string description;
 	bool achieved;
+	int sec;
 };
 
 class Achievements {

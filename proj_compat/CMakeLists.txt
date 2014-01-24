@@ -185,22 +185,29 @@ if(NOT SDL_FOUND AND NOT SDLDIR)
 endif()
 
 if(NOT SDL_FOUND)
-       if(EXISTS ${SDLDIR}/bin/sdl-config)
-       		 EXECUTE_PROCESS(COMMAND ${SDLDIR}/bin/sdl-config --version
+       set( SDL_CONFIG ${SDLDIR}/bin/sdl-config )
+       if(EXISTS ${SDLDIR}/${REQ_PLATF_VER}/bin/sdl-config)
+       		 # SDL exists in the subdirectory
+       		 set( SDL_CONFIG 
+		        ${SDLDIR}/${REQ_PLATF_VER}/bin/sdl-config )
+		 set( SDLDIR ${SDLDIR}/${REQ_PLATF_VER} )
+       endif()
+       if( EXISTS ${SDL_CONFIG} )
+       		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --version
 			OUTPUT_VARIABLE SDL_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-       		 EXECUTE_PROCESS(COMMAND ${SDLDIR}/bin/sdl-config --cflags
+       		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --cflags
 			OUTPUT_VARIABLE SDL_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-       		 EXECUTE_PROCESS(COMMAND ${SDLDIR}/bin/sdl-config --libs 
+       		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --libs 
        	      	 	OUTPUT_VARIABLE SDL_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 		 message( "** Configuration for SDL library found: ${SDL_VERSION}." )
        else()
-		 message( "** Configuration for SDL library not found. Using ${SDLDIR} for root directory." )
+		 message( "** Configuration for SDL library not found. Forcing ${SDLDIR} for root directory." )
        endif()
 
        set(SDL_INCLUDE_DIR ${SDLDIR}/include)
        set(SDL_LIB_DIR ${SDLDIR}/lib)
-       set(SDL_LIBRARY SDL) # SDL library name (-lSDL)
-endif()
+       set(SDL_LIBRARY SDL)
+ endif()
 
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
@@ -400,6 +407,9 @@ SET(SkeletonKey_Data_Files
 	graphics/achievements/achievements_next2.png
 	graphics/achievements/achievements_row_background.png
 	graphics/achievements/achievements_trophy.png
+	graphics/achievements/achievements_sl_badge256.png
+	graphics/achievements/achievements_number1.png
+	graphics/achievements/achievements_top10.png
 	#
 	graphics/backgrounds/background_black.png
 	graphics/backgrounds/background_forest_dark.png
@@ -410,7 +420,13 @@ SET(SkeletonKey_Data_Files
 	graphics/backgrounds/playbook_blur_background_forest_light.png
 	graphics/backgrounds/playbook/background_forest_dark.png
 	graphics/backgrounds/playbook/background_forest_light.png
+	graphics/backgrounds/playbook/background_wood.png
 	#
+	graphics/game/playbook/game_background_beach.png
+	graphics/game/playbook/game_background_caves.png
+	graphics/game/playbook/game_background_forest.png
+	graphics/game/playbook/game_background_ship.png
+	graphics/game/playbook/game_wood.png
 	graphics/game/game_achievement.png
 	graphics/game/game_background_beach.png
 	graphics/game/game_background_caves.png

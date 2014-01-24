@@ -78,8 +78,8 @@ void IGSprite::display() {
 		
 		// display the image
 		Iw2DDrawImage(image,
-			CIwSVec2((int16)((position.x-size.width/2)+IGDistorter::getInstance()->offsetX), 
-				(int16)((position.y-size.height/2)+IGDistorter::getInstance()->offsetY)),
-			CIwSVec2((int16)size.width, (int16)size.height));
+			CIwSVec2((int)((position.x-size.width/2)+IGDistorter::getInstance()->offsetX), 
+				(int)((position.y-size.height/2)+IGDistorter::getInstance()->offsetY)),
+			CIwSVec2((int)size.width, (int)size.height));
 	}
 }

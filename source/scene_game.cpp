@@ -183,7 +183,7 @@ SceneGame::~SceneGame() {
 void SceneGame::restartLevel() {
 	// in case we've already been playing...
 	this->removeAllChildren();
-	shakeStart = s3eTimerGetMs();
+	GameData::getInstance()->levelStart = shakeStart = s3eTimerGetMs();
 
 	// the background
 	IGSprite* spriteBackground = NULL;

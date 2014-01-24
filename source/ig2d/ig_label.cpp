@@ -53,8 +53,8 @@ void IGLabel::display() {
 		
 		// draw the string
 		Iw2DDrawString(str.c_str(),
-			CIwSVec2((int16)((position.x-size.width/2)+IGDistorter::getInstance()->offsetX), (int16)((position.y-size.height/2)+IGDistorter::getInstance()->offsetY)),
-			CIwSVec2((int16)size.width, (int16)size.height),
+			CIwSVec2((int)((position.x-size.width/2)+IGDistorter::getInstance()->offsetX), (int)((position.y-size.height/2)+IGDistorter::getInstance()->offsetY)),
+			CIwSVec2((int)size.width, (int)size.height),
 			alignHorizontal, alignVertical);
 	}
 }

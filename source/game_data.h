@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <string>
+#include <s3e.h>
 
 // game board dimensions
 #define GAME_BOARD_WIDTH 6
@@ -80,15 +81,16 @@ public:
 
 	// a key
 	struct Key {
-		int x, y;
-		bool used;
-		int id;
+	  int x, y;
+	  bool used;
+	  int id;
 	};
 
 	// shared data
 	int stage;
 	int difficulty;
 	int level;
+	int64 levelStart; // level start time
 	char tileString[49];
 	char tiles[6][8];
 	std::vector<GameData::Key> keys;

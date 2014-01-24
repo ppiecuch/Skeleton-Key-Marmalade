@@ -279,6 +279,7 @@ static void stopBackground(bool bReleaseData)
 
 static void setBackgroundVolume(float volume)
 {
+  if (s_isBackgroundInitialized) { // will not work if background is not initialized
 	char volume_str[128];
 
 	// set it up the background volume
@@ -292,6 +293,7 @@ static void setBackgroundVolume(float volume)
 		mmrerror(s_mmrContext, "output parameters");
 		return;
 	}
+  }
 }
 
 SimpleAudioEngine::SimpleAudioEngine()

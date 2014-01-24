@@ -69,7 +69,7 @@ inline static void s3eFreeBase(void* item) { free(item); }
 
 typedef FILE s3eFile;
 
-inline static s3eFile* s3eFileOpen(const char* filename, const char* mode) { return fopen(filename, mode); }
+s3eFile* s3eFileOpen(const char* filename, const char* mode);
 inline static s3eResult s3eFileClose(s3eFile* file) { return fclose(file)?S3E_RESULT_ERROR:S3E_RESULT_SUCCESS; }
 inline static uint32 s3eFileRead(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file) { return fwrite(buffer, elemSize, noElems, file); }
 inline static uint32 s3eFileWrite(void* buffer, uint32 elemSize, uint32 noElems, s3eFile* file)  { return fread(buffer, elemSize, noElems, file); }
@@ -115,9 +115,9 @@ const char* s3eSoundGetErrorString();
 void s3eSoundSetInt(s3eEnum f, int v);
 
 /// Leaderboard support
-typedef void* OBE_ScoreList;
-typedef void (*SC_Callback)(int, OBE_ScoreList); // request callback: mode, scores list
-enum SC_Status { SC_STATUS_NONE, SC_STATUS_BUSY, SC_STATUS_ERROR, SC_STATUS_DIRTY, SC_STATUS_DONE };
+typedef void* SCL_ScoreList;
+typedef void (*SCL_Callback)(int, SCL_ScoreList); // request callback: mode, scores list
+enum SCL_Status { SC_STATUS_NONE, SC_STATUS_BUSY, SC_STATUS_ERROR, SC_STATUS_DIRTY, SC_STATUS_DONE };
 
 /// Utility macros:
 #define f_ssprintf(...)                                 \

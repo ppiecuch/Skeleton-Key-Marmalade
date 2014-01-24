@@ -121,12 +121,15 @@ void Sounds::unloadSounds() {
 Sounds::Sound* Sounds::loadSound(const char* filename) {
 	Sounds::Sound* sound = new Sounds::Sound();
 	s3eFile *fileHandle = s3eFileOpen(filename, "rb");
-	strcpy(sound->fileName, filename);
-	sound->fileSize = s3eFileGetSize(fileHandle);
-	sound->buffer = (int16*)s3eMallocBase(sound->fileSize);
-	memset(sound->buffer, 0, sound->fileSize);
-	s3eFileRead(sound->buffer, sound->fileSize, 1, fileHandle);
-	s3eFileClose(fileHandle);
+	if (fileHandle) {
+	  strcpy(sound->fileName, filename);
+	  sound->fileSize = s3eFileGetSize(fileHandle);
+	  sound->buffer = (int16*)s3eMallocBase(sound->fileSize);
+	  memset(sound->buffer, 0, sound->fileSize);
+	  s3eFileRead(sound->buffer, sound->fileSize, 1, fileHandle);
+	  s3eFileClose(fileHandle);
+	} else
+	  fprintf(stderr, "Error loading sound file: %s.\n", filename);
 	return sound;
 }
 

@@ -107,6 +107,7 @@ static uint32 _GetDevHeight() {
 #define screen_height _GetDevHeight()
 #define virtual_width  320
 #define virtual_height 480
+
 /// The scale considering the screen size and virtual size
 const float scale_x = (float)screen_width / (float)virtual_width;
 const float scale_y = (float)screen_height / (float)virtual_height;
@@ -173,7 +174,6 @@ static int _cp(const char *to, const char *from) {
 
         do {
             nwritten = write(fd_to, out_ptr, nread);
-
             if (nwritten >= 0)
             {
                 nread -= nwritten;
@@ -185,7 +185,6 @@ static int _cp(const char *to, const char *from) {
             }
         } while (nread > 0);
     }
-
     if (nread == 0)
     {
         if (close(fd_to) < 0)
@@ -194,18 +193,14 @@ static int _cp(const char *to, const char *from) {
             goto out_error;
         }
         close(fd_from);
-
         /* Success! */
         return 0;
     }
-
   out_error:
     saved_errno = errno;
-
     close(fd_from);
     if (fd_to >= 0)
         close(fd_to);
-
     errno = saved_errno;
     return -1;
 }
@@ -414,6 +409,15 @@ void s3eKeyboardUpdate() { keys = SDL_GetKeyState(NULL); }
 s3eEnum s3eKeyboardGetState(s3eKeys key) { keys[s_s3eToSDLTranslation[key]]?S3E_KEY_STATE_PRESSED:S3E_KEY_STATE_RELEASED; }
 s3eBool s3eDeviceCheckQuitRequest() { return done; }
 
+s3eFile* s3eFileOpen(const char* filename, const char* mode) { 
+  struct stat st;
+  if (stat(filename, &st) == 0)
+    return fopen(filename, mode);
+  if (resourceExists(filename))
+    return fopen(resourcePath(filename), mode);
+  return NULL;
+}
+
 int32 s3eFileGetSize(s3eFile* file) {
   struct stat st; 
   if (fstat(fileno(file), &st) == 0)
@@ -551,6 +555,9 @@ public:
     else if (utf8map.count(ch))
       index = utf8map[ch];
     else index = asciimap[not_found_ch];
+
+    assert(index<regions.size());
+
     return regions[index];
   }
   TileTextureCoord GetTextureCoord(uint ch, char not_found_ch = '?') {
@@ -583,9 +590,14 @@ void IwResManagerInit()
   // copy sqlite databases to writeable location:
   const char *_sqdb[] = {
     "achievements.db",
+    "achievements.db.overwrite",
     "levels.db",
+    "levels.db.overwrite",
     "saved_game.db",
-    "settings.db", NULL };
+    "saved_game.db.overwrite",
+    "settings.db",
+    "settings.db.overwrite",
+    NULL };
   for(char **db = (char **)_sqdb; *db != NULL; db++) {
     if (resourceExists(*db) && !_fileExists(writePath(*db))) {
       fprintf(stderr, "*** Copying to writeable location: %s.\n", *db);
@@ -627,8 +639,8 @@ public:
       return;
     }
 
-    size.x = width;
-    size.y = height;
+    size.x = width; if (native) size.x /= IGDistorter::getInstance()->multiply;
+    size.y = height; if (native) size.y /= IGDistorter::getInstance()->multiply;
 
     texture = SOIL_create_OGL_texture2(idata, width, height, channels, SOIL_CREATE_NEW_ID, SOIL_FLAG_POWER_OF_TWO|SOIL_FLAG_MULTIPLY_ALPHA);
     free(idata);
@@ -659,9 +671,14 @@ CIw2DImage* Iw2DCreateImageResource(const char* resource)
   const char *_search[] = { 
     "", 
 #ifdef __PLAYBOOK__
+    "*graphics/game/playbook/",
+#endif
+    "graphics/game/",
+#ifdef __PLAYBOOK__
     "*graphics/backgrounds/playbook/",
 #endif
     "graphics/backgrounds/",
+    "graphics/game_menu/",
     "graphics/menu/",
 #ifdef __PLAYBOOK__
     "graphics/map/playbook/",
@@ -670,6 +687,7 @@ CIw2DImage* Iw2DCreateImageResource(const char* resource)
     "graphics/options/",
     "graphics/achievements/",
     "graphics/select_level/",
+    "graphics/instructions/",
     NULL };
   const char *path = NULL; bool native = false;
   for(char **p=(char**)_search; *p != NULL; p++) {
@@ -691,7 +709,7 @@ CIw2DImage* Iw2DCreateImageResource(const char* resource)
 CIw2DFont* Iw2DCreateFontResource(const char* resource)
 {
   if (_fonts.count(resource)) {
-    return _fonts[resource];
+    return new CcIw2DFont(*_fonts[resource]); // make a copy based on current cached font
   }
   fprintf(stderr, "*** Font resource %s not found.\n", resource);
   return NULL;
@@ -715,7 +733,7 @@ void Iw2DSetColour(const uint32 color) {
   _current_color = color;
 }
 
-std::pair<int,int> _text_size(const char* text) {
+static std::pair<int,int> _text_size(const char* text, std::vector<int> &lines_width) {
   string line = text;
 
   const string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
@@ -724,30 +742,43 @@ std::pair<int,int> _text_size(const char* text) {
     fprintf( stderr, "[_text_size] This part is fine and will be processed: %s.\n", string(line.begin(), end_it).c_str() );
   }
   utf8::iterator<string::iterator> it (line.begin(), line.begin(), end_it);
-  int index = 0, len = 0, height = 0; while(it.base()!=end_it) {
+  int len = 0, line_len = 0, height = 0, line_height = 0; while(it.base()!=end_it) {
     const uint32_t ch = *it;
-    const TileCoord &box = _current_font->GetTextureRegion(ch);
-    len += box.x2-box.x1; const int h = box.y2-box.y1; if ( h > height ) height = h;
-    it++; 
+    if (ch == '\n') {
+      height += line_height; line_height = 0;
+      if (line_len > len) len = line_len;
+      lines_width.push_back(line_len); line_len = 0;
+    } else {
+      const TileCoord &box = _current_font->GetTextureRegion(ch);
+      line_len += box.x2-box.x1; const int h = box.y2-box.y1; if ( h > line_height ) line_height = h;
+    }
+    it++;
   }
+
+  if (line_len) lines_width.push_back(line_len); // add remaining line
+  height += line_height;
+
   return std::pair<int,int>(len,height);
 }
 
-void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign) {
+void Iw2DDrawString(const char* text, CIwSVec2 topLeft, CIwSVec2 size, CIw2DFontAlign horzAlign, CIw2DFontAlign vertAlign) {
 
-  const std::pair<int,int> &sz = _text_size(text);
+  if (!*text) return; // nothing to draw
 
-  float x = topLeft.x;
+  std::vector<int> lines_width;
+  const std::pair<int,int> &sz = _text_size(text, lines_width);
+
+  int ln = 0;
+  float x = topLeft.x, xs = topLeft.x;
   float y = topLeft.y;
   if (horzAlign == IW_2D_FONT_ALIGN_CENTRE) {
-    x += (size.x - sz.first) / 2.;
+    x += (size.x - lines_width[ln]) / 2.;
   }
   if (vertAlign == IW_2D_FONT_ALIGN_CENTRE) {
     y += (size.y - sz.second) / 2.;
   }
 
   string line = text;
-
   const string::iterator end_it = utf8::find_invalid(line.begin(), line.end());
   if (end_it != line.end()) {
     fprintf( stderr, "[Iw2DDrawString] Invalid UTF-8 encoding detected.\n" );
@@ -758,37 +789,47 @@ void Iw2DDrawString(const char* text, CIwFVec2 topLeft, CIwFVec2 size, CIw2DFont
   int index = 0; while(it.base()!=end_it) {
     const uint32_t ch = *it;
 
-    const TileTextureCoord &coord = _current_font->GetTextureCoord(ch);
-    const TileCoord &box = _current_font->GetTextureRegion(ch);
+    if (ch == '\n') {
+      ++ln; y += sz.second; // next line
+      // restart x position
+      if (horzAlign == IW_2D_FONT_ALIGN_CENTRE) {
+	x += (size.x - lines_width[ln]) / 2.;
+      } else
+	x = xs;
+    } else {
+      const TileTextureCoord &coord = _current_font->GetTextureCoord(ch);
+      const TileCoord &box = _current_font->GetTextureRegion(ch);
     
-    const int h = box.y2 - box.y1;
-    const int w = box.x2 - box.x1;
+      const int h = box.y2 - box.y1;
+      const int w = box.x2 - box.x1;
 
-    struct _v2c4 {
-      GLfloat v[2];
-      GLfloat t[2];
-      uint32_t c;
-    } vertices[] = {
-      { {x, y}, {coord.x1, coord.y1}, _current_color },
-      { {x, y+h}, {coord.x1, coord.y2}, _current_color },
-      { {x+w, y}, {coord.x2, coord.y1}, _current_color },
-      { {x+w, y+h}, {coord.x2, coord.y2}, _current_color },
-    };
-    glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+      struct _v2c4 {
+	GLfloat v[2];
+	GLfloat t[2];
+	uint32_t c;
+      } vertices[] = {
+	{ {x, y}, {coord.x1, coord.y1}, _current_color },
+	{ {x, y+h}, {coord.x1, coord.y2}, _current_color },
+	{ {x+w, y}, {coord.x2, coord.y1}, _current_color },
+	{ {x+w, y+h}, {coord.x2, coord.y2}, _current_color },
+      };
+      glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
+      glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
+      glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
+      glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-    it++; x += w;
+      x += w;
+    }
+    it++;;
   }
 }
 
-void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
+void Iw2DDrawImage(CIw2DImage* image, CIwSVec2 topLeft, CIwSVec2 size) {
 
   CcIw2DImage* img = dynamic_cast<CcIw2DImage*>(image);
 
-  const float x = topLeft.x + (img->IsNative()?IGDistorter::getInstance()->offsetX:0);
-  const float y = topLeft.y + (img->IsNative()?IGDistorter::getInstance()->offsetY:0);
+  const float x = topLeft.x;
+  const float y = topLeft.y;
   const float w = size.x;
   const float h = size.y;
   float uofs = 0;
@@ -810,14 +851,7 @@ void Iw2DDrawImage(CIw2DImage* image, CIwFVec2 topLeft, CIwFVec2 size) {
   glVertexPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->v);
   glTexCoordPointer(2, GL_FLOAT, sizeof(_v2c4), vertices->t);
   glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(_v2c4), &vertices->c);
-  if (img->IsNative()) {
-    glPushMatrix(); // reverse any transformations
-    //glMultMatrixf(AffineTransform::matrix(_current_matrix.inverted())());
-    glLoadIdentity();
-  }
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); 
-  if (img->IsNative())
-    glPopMatrix();
 }
 
 void Iw2DClearScreen(const uint32 color) {
@@ -1014,34 +1048,377 @@ static SC_InitData_t initData;
 
 static struct ScoreGetCmd {
     const int type;
-    SC_Status status;
     SC_Error_t error_status;
     SC_ScoreList_h list;
     SC_ScoresController_h controller;
-    SC_Callback callback;
+    SCL_Status status;
+    SCL_Callback callback;
     ScoreGetCmd():type(SCORE_RETRIVE_ACTION),status(SC_STATUS_NONE),error_status(SC_OK),callback(NULL) { }
 } scores[SC_NUM_MODES];
 static struct ScoreSubmitCmd {
     const int type;
-    SC_Status status;
     SC_Error_t error_status;
     SC_Score_h score;
     void *payload;
     SC_ScoresController_h controller;
-    SC_Callback callback;
+    SCL_Status status;
+    SCL_Callback callback;
     ScoreSubmitCmd():type(SCORE_SUBMIT_ACTION),status(SC_STATUS_NONE),error_status(SC_OK),payload(NULL),callback(NULL) { }
 } score_submit;
 
 #define SCORE_CHECK_ERR(code) if(SC_Error_t _err = (code)) { fprintf(stderr, "^^ %s failed at line %d with error code: %d.\n", __FUNCTION__, __LINE__, _err); return false; }
+
+// inclue Scoreloop leaderboard information:
+#include "../sc.info.h"
 
 #define QUEUE_STR_LEN 32
 #define QUEUE_FILE writePath("slqueues.db")
 static DArray score_queue;
 static int live_requests = 0;
 typedef struct {
-  double result; // time
-  unsigned int mode;
+  double result;       // time
+  unsigned int mode;   // skill
   double minor_result; // numer of moves
-  unsigned int level;
+  unsigned int level;  // achivments id
 } QueuedScore;
 
+#ifdef __QNXNTO__
+# if BPS_VERSION == 3000000
+SC_ScoreFormatter_h SC_Client_GetScoreFormatter(SC_Client_h score_client) {
+  SC_ScoreFormatter_h sf;
+  SC_Client_GetScoreFormatter(score_client, &sf);
+  return sf;
+}
+# define SC_SCORES_SEARCH_LIST_ALL SC_SCORE_SEARCH_LIST_GLOBAL
+# define SC_ScoresSearchList_t SC_ScoreSearchList_t
+# define SC_ScoreList_GetCount SC_ScoreList_GetScoresCount
+# define SC_ScoreList_GetAt    SC_ScoreList_GetScore
+# define SC_ScoresController_LoadScoresAtRank SC_ScoresController_LoadRangeAtRank
+# endif
+#endif
+
+static void _load_queues(void) {
+    if(file_exists(QUEUE_FILE)) {
+        FileHandle f = file_open(QUEUE_FILE);
+        
+        uint32 magic = file_read_uint32(f);
+        if(magic != FOURCC('G', 'S', 'Q', '0')) {
+            fprintf(stderr, "[scoreloop] Unable to load score queues");
+            return;
+        }
+
+        file_read(f, &score_queue, sizeof(score_queue));
+
+        size_t sizeof_score = score_queue.item_size;
+        
+        if(sizeof(QueuedScore) != sizeof_score) {
+            fprintf(stderr, "[scoreloop] Score queues data size mismatch");
+            score_queue = darray_create(sizeof(QueuedScore), 0);
+            return;
+        }
+
+        fprintf(stderr, "[scoreloop] Restored %d score requests\n", sizeof_score);
+
+        size_t score_bytes = sizeof_score * score_queue.reserved;
+        score_queue.data = MEM_ALLOC(score_bytes);
+        file_read(f, score_queue.data, score_bytes);
+        
+        file_close(f);
+    } else {
+        score_queue = darray_create(sizeof(QueuedScore), 0);
+    }
+}
+
+static void _flush_queues(void) {
+    FileHandle f = file_create(QUEUE_FILE);
+    
+    file_write_uint32(f, FOURCC('G', 'S', 'Q', '0'));
+    file_write(f, &score_queue, sizeof(score_queue));
+    file_write(f, score_queue.data, sizeof(QueuedScore) * score_queue.reserved);
+    
+    file_close(f);
+}
+
+static void _close_queues(void) {
+    darray_free(&score_queue);
+}
+
+
+void _controllerCallback(void* userData, SC_Error_t completionStatus);
+
+
+bool _report_score(ScoreSubmitCmd *cmd, const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel) {
+    SC_ScoreController_h score_controller;
+    SC_Score_h score;
+    
+    cmd->status = SC_STATUS_ERROR;
+    cmd->score = score;
+
+    //Step 1
+    SCORE_CHECK_ERR(SC_Client_CreateScore(score_client, &score));
+    //Step 2
+    //aResult is the main numerical result achieved by a user in the game.
+    SCORE_CHECK_ERR(SC_Score_SetResult(score, aResult));
+    //Step 3
+    //aMinorResult is the score result of the game
+    SCORE_CHECK_ERR(SC_Score_SetMinorResult(score, aMinorResult));
+    //aMode is the mode of the game
+    SCORE_CHECK_ERR(SC_Score_SetMode (score, aMode));
+    //aLevel is the level in the game
+    SCORE_CHECK_ERR(SC_Score_SetLevel (score, aLevel));
+    //Step 4
+    // client - assumes the handle to the client exists
+    // controllerCallback is the callback to be registered
+    SCORE_CHECK_ERR(SC_Client_CreateScoreController (score_client, &score_controller, _controllerCallback, cmd));
+    //Step 5
+    SCORE_CHECK_ERR(SC_ScoreController_SubmitScore(score_controller, score));
+    //Mark a request busy if all steps successed.
+    cmd->status = SC_STATUS_BUSY;
+    ++live_requests;
+    
+    return SC_OK;
+}
+
+// process single element from report score queue:
+static void _process_score_queue(void) {
+    if(score_queue.size && live_requests == 0) {
+        printf("scoreloop: processing %d requests queue.\n", score_queue.size);
+        QueuedScore* scores = DARRAY_DATA_PTR(score_queue, QueuedScore);
+        const int i = 0; // process only first one
+        score_submit.payload = &scores[i];
+        _report_score(&score_submit, scores[i].result, scores[i].mode, scores[i].minor_result, scores[i].level);
+    }
+}
+
+void _controllerCallback(void* userData, SC_Error_t completionStatus) {
+    
+    --live_requests; int request_type = *(int*)userData;
+    assert(live_requests >= 0);
+
+    if (completionStatus != SC_OK) {
+        
+        if (request_type == SCORE_SUBMIT_ACTION) {
+        } else {
+            ScoreGetCmd *cmd = (ScoreGetCmd*)userData;
+            cmd->status = SC_STATUS_ERROR;
+            cmd->error_status = completionStatus;
+        };
+        fprintf(stderr, "[scoreloop] controllerCallback failed with status: %s.\n", SC_MapErrorToStr(completionStatus));
+        
+    } else if (request_type == SCORE_SUBMIT_ACTION) {
+        
+        ScoreSubmitCmd *cmd = (ScoreSubmitCmd*)userData;
+        
+        // Find score queue item and remove it
+        printf("Score reported to SL successfully: %lld", cmd->score);
+        if (cmd->payload) {
+            QueuedScore* scores = DARRAY_DATA_PTR(score_queue, QueuedScore);
+            for(uint i = 0; i < score_queue.size; ++i) {
+                if(&scores[i] == cmd->payload) {
+                    darray_remove_fast(&score_queue, i); _flush_queues(); // save current report score queue
+                    break;
+                }
+            }
+        }
+    } else /* SCORE_RETRIVE_ACTION */ {
+        
+        fprintf(stderr, "[scoreloop] controllerCallback for retrive action.\n");
+        
+        ScoreGetCmd *cmd = (ScoreGetCmd*)userData;
+        
+        cmd->list = SC_ScoresController_GetScores(cmd->controller);
+        // process scores first:
+        if(cmd->callback) cmd->callback(SC_ScoresController_GetMode(cmd->controller), (SCL_ScoreList)cmd);
+        // and change status next:
+        cmd->status = SC_STATUS_DONE;
+        cmd->error_status = completionStatus;
+        if (cmd->list) {
+            // client - assumes the handle to the client exists
+            unsigned int i, numScores = SC_ScoreList_GetCount(cmd->list);
+            for (i = 0; i < numScores; ++i) {
+                SC_Score_h score = SC_ScoreList_GetAt(cmd->list, i);
+                SC_User_h user = SC_Score_GetUser(score);
+                SC_String_h login = user ? SC_User_GetLogin(user) : NULL;
+                //logging the details
+                fprintf(stderr, "Rank: %d, Result: %d, User: %s.\n", SC_Score_GetRank(score), static_cast<int>(SC_Score_GetResult(score)),
+                        login ? SC_String_GetData(login) : "<unknown>");
+            }
+        } else
+            fprintf(stderr, "[scoreloop] controllerCallback - SC_ScoresController_GetScores failed.\n");
+    }
+
+    _process_score_queue(); // continue with next submission
+}
+
+// requires SC creditentials
+bool SCL_InitLeaderboard() {
+    const char *aGameId       = SC_GameID;
+    const char *aGameSecret   = SC_GameSecret;
+    const char *aGameCurrency = "JIA";
+    const char *aLanguageCode = "en";
+    const char *aGameVersion  = "1.0";
+
+    SC_Error_t errCode;
+    
+    // Initialize the platform adaptation object
+    SC_InitData_Init(&initData);
+
+    // Optionally modify the following fields:
+    // initData.currentVersion = SC_INIT_CURRENT_VERSION;
+    // initData.minimumRequiredVersion = SC_INIT_VERSION_1_0;
+    // Create the client.
+    // aGameId, aGameSecret and aCurrency are const char strings that you obtain from Scoreloop.
+    // aGameVersion should be your current game version.
+    // aLanguageCode specifies the language support for localization in awards,
+    // for example, "en" for English, which is the default language.
+    errCode = SC_Client_New(&score_client, &initData, aGameId, aGameSecret, aGameVersion, aGameCurrency, aLanguageCode);
+    if (errCode != SC_OK) {
+      fprintf(stderr, "^^ SC_Client_New failed with error code: %d.\n", errCode);
+      if (errCode == SC_DEV_PERMISSION_DENIED) {
+	// not enough permissions to initiate Scoreloop module
+      }
+    } else {
+#ifdef SDL_HINT_SET_SC_INIT_DATA
+      SDL_SetHint(SDL_HINT_SET_SC_INIT_DATA, f_ssprintf("%p", (void *)&initData));
+#endif
+      _load_queues(); _process_score_queue(); // load queue of scores to be submitted and start submission
+    }
+    return (SC_OK == errCode);
+}
+
+void SCL_CloseLeaderboard() {
+    SC_Client_Release(score_client);
+    _close_queues();
+}
+
+bool SCL_ReportScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel) {
+    // put new request into the queue:
+    QueuedScore qscore;
+    qscore.result = aResult;
+    qscore.mode = aMode;
+    qscore.minor_result = aMinorResult;
+    qscore.level = aLevel;
+    
+    darray_append(&score_queue, &qscore); _flush_queues(); // save current report score queue
+    
+    if (score_client)
+        _process_score_queue();
+    
+    return true;
+}
+
+bool SCL_SubmitScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel) {
+    if(score_client && score_submit.status!=SC_STATUS_BUSY) { //! we are reusing global submit structure
+        score_submit.payload = NULL;
+        return _report_score(&score_submit, aResult, aMode, aMinorResult, aLevel);
+    } else
+        return false;
+}
+
+bool SCL_RequestLeaderboard(const unsigned int aMode, SCL_Callback callback) {
+
+    assert(aMode < SC_NUM_MODES);
+    
+    if (live_requests) {
+      fprintf(stderr, "^^ %s: leaderboard %d skipped - %d request(s) in progress.\n", __FUNCTION__, aMode, live_requests);
+      return false; // other request in progress
+    }
+ 
+    unsigned int aRange;
+    SC_Score_h aScore;
+    SC_User_h aUser;
+
+    SC_ScoresSearchList_t aSearchList = SC_SCORES_SEARCH_LIST_ALL;
+
+    scores[aMode].status = SC_STATUS_ERROR;
+    scores[aMode].callback = callback;
+
+    SCORE_CHECK_ERR(SC_Client_CreateScoresController (score_client, &scores[aMode].controller, _controllerCallback, &scores[aMode]));
+    //Setting the search list option
+    // aSearchList points to one of the following searchlists:
+    // (SC_SCORE_SEARCH_LIST_GLOBAL, SC_SCORE_SEARCH_LIST_24H or SC_SCORE_SEARCH_LIST_USER_COUNTRY)
+    SCORE_CHECK_ERR(SC_ScoresController_SetSearchList (scores[aMode].controller, aSearchList));
+    SCORE_CHECK_ERR(SC_ScoresController_SetMode(scores[aMode].controller, aMode));
+    //Request the scores by using one of the following methods
+    // aRange.offset = 0;
+    // aRange.length = 20;
+    // errCode = SC_ScoresController_LoadScores(scores_controller, aRange);
+    // errCode = SC_ScoresController_LoadScoresAroundScore(scores_controller, aScore, aRange);
+    SCORE_CHECK_ERR(SC_ScoresController_LoadScoresAtRank(scores[aMode].controller, 1, 10)); // request top 10
+    //All steps fine - mark request busy.
+    scores[aMode].status = SC_STATUS_BUSY;
+    ++live_requests;
+    
+    return SC_OK;
+}
+
+int SCL_GetLeaderboardLiveRequests() {
+    return live_requests;
+}
+
+SCL_Status SCL_GetLeaderboardStatus(const unsigned int aMode) {
+    assert(aMode < SC_NUM_MODES);
+    return scores[aMode].status;
+}
+
+SCL_ScoreList SCL_GetLeaderboard(const unsigned int aMode) {
+    assert(aMode < SC_NUM_MODES);
+    return (SCL_ScoreList*)&scores[aMode];
+}
+
+int SCL_GetLeaderboardCount(const SCL_ScoreList score_list) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    return SC_ScoreList_GetCount(cmd->list);
+}
+
+double SCL_GetLeaderboardResultAt(const SCL_ScoreList score_list, int pos) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
+    return SC_Score_GetResult(score);
+}
+
+const char *SCL_GetLeaderboardUserAt(const SCL_ScoreList score_list, int pos) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
+    SC_User_h user = SC_Score_GetUser(score);
+    SC_String_h login = user ? SC_User_GetLogin(user) : NULL;
+    return login ? SC_String_GetData(login) : "<?>";
+}
+
+const char *SCL_GetLeaderboardEmailAt(const SCL_ScoreList score_list, int pos) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    if (cmd->list) {
+        SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
+        SC_User_h user = SC_Score_GetUser(score);
+        SC_String_h email = user ? SC_User_GetEmail(user) : NULL;
+        return email ? SC_String_GetData(email) : "n/a";
+    }
+    return "?";
+}
+
+int SCL_GetLeaderboardRankAt(const SCL_ScoreList score_list, int pos) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    if (cmd->list) {
+        SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
+        return SC_Score_GetRank(score);
+    }
+    return 0;
+}
+
+bool SCL_IsMyLeaderboardAt(const SCL_ScoreList score_list, int pos) {
+    ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
+    if (cmd->list) {
+        SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
+        return SC_User_Equals( SC_Session_GetUser(SC_Client_GetSession(score_client)), SC_Score_GetUser(score) );
+    }
+    return false;
+}
+
+bool SCL_SetLeaderboardDirty(const unsigned int aMode) {
+    assert(aMode < SC_NUM_MODES);
+    if (scores[aMode].status != SC_STATUS_BUSY) {
+        scores[aMode].status = SC_STATUS_DIRTY;
+        return true;
+    } else
+        return false;
+}

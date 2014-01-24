@@ -21,7 +21,7 @@ public:
 };
 
 typedef CIwVec2<int> CIwIVec2;
-typedef CIwVec2<int16> CIwSVec2;
+typedef CIwVec2<int> CIwSVec2;
 typedef CIwVec2<float> CIwFVec2;
 
 typedef affinetransform::AffineTransformT<float> AffineTransform;

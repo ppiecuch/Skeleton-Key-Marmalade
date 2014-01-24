@@ -124,8 +124,8 @@ void SceneAchievements::pageNext() {
 void SceneAchievements::updateAchievements() {
 	int i;
 	// start by getting rid of all the old achievements
-	for(i=0; i<4*5; i++)
-		removeChildByTag(AchievementsTagItems+i);
+	for(i=0; i<4*5; i++) // 4 element for each of 5 achivments on the page
+	  removeChildByTag(AchievementsTagItems+i);
 
 	// figure out what achievements need displaying
 	int start = pageNumber*5;
