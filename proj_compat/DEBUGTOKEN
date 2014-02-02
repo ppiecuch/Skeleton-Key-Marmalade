@@ -15,7 +15,7 @@ fi
 DEVICEIP=169.254.0.1
 DEVICEPW=1234
 
-if [ ".$1" == "storepass" ]; then
+if [ ".$1" = "storepass" ]; then
     shift
     pass=$1
     shift
@@ -27,9 +27,11 @@ fi
 dt=debugtoken1
 
 if [ -z "$pass" ]; then
-    pass=`cat .storepass`
+    if [ -e ".storepass" ]; then
+	pass=`cat .storepass`
+    fi
     if [ -z "$pass" ]; then
-	echo "$0 storepass <store password> [<device password>]"
+	echo "usage: $0 storepass <store password> [<device password>]"
 	echo "$0: no password for store has been found."
 	exit 1
     fi
