@@ -407,9 +407,11 @@ SET(SkeletonKey_Data_Files
 	graphics/achievements/achievements_next2.png
 	graphics/achievements/achievements_row_background.png
 	graphics/achievements/achievements_trophy.png
-	graphics/achievements/achievements_sl_badge256.png
-	graphics/achievements/achievements_number1.png
-	graphics/achievements/achievements_top10.png
+	#
+	graphics/leadersboard/leadersboard_header.png
+	graphics/leadersboard/leadersboard_sl_badge256.png
+	graphics/leadersboard/leadersboard_number1.png
+	graphics/leadersboard/leadersboard_top10.png
 	#
 	graphics/backgrounds/background_black.png
 	graphics/backgrounds/background_forest_dark.png
@@ -614,6 +616,14 @@ SET(SkeletonKey_Data_Files
 	fonts/font_algerian_20.tga
 	fonts/font_deutsch_26.tga
 	fonts/font_gabriola_16b.tga
+	#
+	click.raw
+	key_move.raw
+	open_chest.raw
+	unlock_achievement.raw
+	door.raw
+	map_locked.raw
+	restart_level.raw
 	#
 	achievements.db
 	levels.db

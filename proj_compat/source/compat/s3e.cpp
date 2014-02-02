@@ -450,14 +450,18 @@ typedef pair<ALuint, ALuint> ChannelInfo;
 static vector<ChannelInfo> _channels;
 
 s3eResult s3eSoundChannelPlay(int channel, int16* start, uint32 numSamples, int32 repeat, int32 loopfrom) {
-  if (_channels.size() > channel) {
+  if (channel < 0) {
+    _audio_error = f_ssprintf("s3eSoundChannelPlay: invalid channel %d (of %d allocated).", channel, _channels.size());
+    fprintf (stderr, "*** %s\n", _audio_error.c_str());
+    return S3E_RESULT_ERROR;
+  } else if (_channels.size() > channel) {
     const ChannelInfo &ch = _channels[channel];
     alBufferData(ch.second, AL_FORMAT_STEREO16, start, numSamples, _default_freq);
     alSourcei(ch.first, AL_LOOPING, repeat ? AL_TRUE : AL_FALSE);
     alSourcePlay(ch.first);
     return S3E_RESULT_SUCCESS;
   } else {
-    _audio_error = f_ssprintf("s3eSoundChannelPlay: invalid channel %d (of %d).", channel, _channels.size());
+    _audio_error = f_ssprintf("s3eSoundChannelPlay: invalid channel %d (of %d allocated).", channel, _channels.size());
     fprintf (stderr, "*** %s\n", _audio_error.c_str());
     return S3E_RESULT_ERROR;
   }
@@ -468,6 +472,14 @@ int s3eSoundGetFreeChannel() {
   alGenBuffers (1, &buffer);
   if (alGetError () != AL_NO_ERROR)
     {
+      // look for already allocated free buffer:
+      for(int x=0; x<_channels.size(); ++x) {
+	const ChannelInfo &ch = _channels[x];
+	ALint sourceState;
+	alGetSourcei(ch.first, AL_SOURCE_STATE, &sourceState);
+	if (sourceState != AL_PLAYING)
+	  return x;
+      }
       _audio_error = "s3eSoundGetFreeChannel: failed with alGenBuffers.";
       fprintf (stderr, "*** %s\n", _audio_error.c_str());
       return -1;
@@ -477,7 +489,7 @@ int s3eSoundGetFreeChannel() {
 
   _channels.push_back(ChannelInfo(source, buffer));
 
-  return source;
+  return _channels.size()-1;
 }
 const char* s3eSoundGetErrorString() { return _audio_error.c_str(); }
 void s3eSoundSetInt(s3eEnum f, int v) {

@@ -5,6 +5,6 @@
 #define SK_MINOR 1
 #define SK_REVISION 0
 #define SK_VERSION "1.1.0"
-#define SK_BUILDVERSION "1.1.0.2952"
-#define SK_BUILDTIME "14/01/2014 15:51"
-#define SK_SOURCE_REV 0xc9ed247
+#define SK_BUILDVERSION "1.1.0.2703"
+#define SK_BUILDTIME "14/02/2014 13:01"
+#define SK_SOURCE_REV 0xaa9e2ff

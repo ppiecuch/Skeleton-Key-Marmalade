@@ -1,12 +1,20 @@
 #!/bin/bash
 
 #
-# Recreate expired token and upplaod to the device.
+# Recreate expired token and upload to the device.
 #
 
-SDK=/Developer/SDKs/bbndk
+if [ -e "/Developer/SDKs/bbndk" ]; then
+    # OSX
+    SDK=/Developer/SDKs/bbndk
+elif [ -e "/RIM/bbndk" ]; then
+    # Win32
+    SDK=/RIM/bbndk
+fi
+
 DEVICEIP=169.254.0.1
 DEVICEPW=1234
+
 if [ ".$1" == "storepass" ]; then
     shift
     pass=$1
