@@ -190,6 +190,7 @@ fi
 
 script=`basename $0`
 
+START=$(date +%s)
 if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $script -nt cmake.ts ]; then
  rm -rf cmake.ts
  cmake \
@@ -216,7 +217,9 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
     $3 ./ \
 && touch cmake.ts \
 && make $VERBOSE $TARGET \
-&& terminal-notifier -message "$0 script finished$MESSAGE" -title "BUILDER" >> /dev/null
+&& END=$(date +%s); DIFF=$(echo "$END - $START" | bc); terminal-notifier -message "`basename $0` script finished$MESSAGE Execution time: $DIFF sec." -title "BUILDER" >> /dev/null
 else
- make $VERBOSE $TARGET && terminal-notifier -message "$0 script finished$MESSAGE" -title "BUILDER" >> /dev/null
+    END=$(date +%s)
+    DIFF=$(echo "$END - $START" | bc)
+    make $VERBOSE $TARGET && terminal-notifier -message "`basename $0` script finished$MESSAGE\nExecution time: $DIFF sec." -title "BUILDER" >> /dev/null
 fi

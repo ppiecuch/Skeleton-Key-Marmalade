@@ -67,8 +67,9 @@ public:
     @brief Play background music
     @param pszFilePath The path of the background music file,or the FileName of T_SoundResInfo
     @param bLoop Whether the background music loop or not
+    @return true on successfull loading and configuring background music
     */
-    void playBackgroundMusic(const char* pszKey, bool bLoop = false);
+    bool playBackgroundMusic(const char* pszKey, bool bLoop = false);
 
     /**
     @brief Stop playing background music
@@ -79,12 +80,12 @@ public:
     /**
     @brief Pause playing background music
     */
-    void pauseBackgroundMusic();
+    bool pauseBackgroundMusic();
 
     /**
     @brief Resume playing background music
     */
-    void resumeBackgroundMusic();
+    bool resumeBackgroundMusic();
 
     /**
     @brief Rewind playing background music

@@ -425,23 +425,58 @@ int32 s3eFileGetSize(s3eFile* file) {
   return 0;
 }
 
+static int __checkALError(const char *funcName)
+{
+  int err = alGetError();
+    
+  if (err != AL_NO_ERROR)
+  {
+    switch (err)
+    {
+    case AL_INVALID_NAME:
+      fprintf(stderr, "AL_INVALID_NAME in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_ENUM:
+      fprintf(stderr, "AL_INVALID_ENUM in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_VALUE:
+      fprintf(stderr, "AL_INVALID_VALUE in %s\n", funcName);
+      break;
+	    
+    case AL_INVALID_OPERATION:
+      fprintf(stderr, "AL_INVALID_OPERATION in %s\n", funcName);
+      break;
+	    
+    case AL_OUT_OF_MEMORY:
+      fprintf(stderr, "AL_OUT_OF_MEMORY in %s\n", funcName);
+      break;
+    }
+  }
+  
+  return err;
+}
+
 s3eBool s3eAudioIsCodecSupported(s3eEnum codec) {
   if (codec == S3E_AUDIO_CODEC_PCM) return true;
+  else if (codec == S3E_AUDIO_CODEC_MP3) return true;
   return false;
 }
 
-static uint _last_audio_source = 0;
 static uint _default_freq = 44100;
 static string _audio_error;
 
 s3eResult s3eAudioPlay(const char* filename, uint32 repeatCount) { 
-  _last_audio_source = _audio->playEffect(filename, repeatCount); 
-  return S3E_RESULT_SUCCESS; 
+  if (_audio->playBackgroundMusic(filename, repeatCount))
+    return S3E_RESULT_SUCCESS; 
+  else
+    return S3E_RESULT_ERROR; 
 }
-s3eResult s3eAudioPause() { alSourcePause(_last_audio_source); return S3E_RESULT_SUCCESS; }
-s3eResult s3eAudioResume(){ alSourcePlay(_last_audio_source); return S3E_RESULT_SUCCESS; }
-void s3eAudioStop() { alSourceStop(_last_audio_source); }
-s3eBool s3eAudioIsPlaying() { ALint sourceState; alGetSourcei(_last_audio_source, AL_SOURCE_STATE, &sourceState); return (sourceState == AL_PLAYING); }
+s3eResult s3eAudioPause() { return _audio->pauseBackgroundMusic()?S3E_RESULT_SUCCESS:S3E_RESULT_ERROR; }
+s3eResult s3eAudioResume(){ return _audio->resumeBackgroundMusic()?S3E_RESULT_SUCCESS:S3E_RESULT_ERROR; }
+void s3eAudioStop() { _audio->stopBackgroundMusic(); }
+s3eBool s3eAudioIsPlaying() { return _audio->isBackgroundMusicPlaying()?S3E_RESULT_SUCCESS:S3E_RESULT_ERROR; }
 void s3eAudioSetInt(s3eEnum f, int v) {
   if (f == S3E_AUDIO_VOLUME) _audio->setEffectsVolume( clamp(v, 0, 255)/255. );
 }
@@ -467,10 +502,13 @@ s3eResult s3eSoundChannelPlay(int channel, int16* start, uint32 numSamples, int3
   }
 }
 int s3eSoundGetFreeChannel() {
+
+  __checkALError("s3eSoundGetFreeChannel"); // clear error message
+
   ALuint source;		
   ALuint buffer;
   alGenBuffers (1, &buffer);
-  if (alGetError () != AL_NO_ERROR)
+  if (__checkALError("s3eSoundGetFreeChannel/alGenBuffers") != AL_NO_ERROR)
     {
       // look for already allocated free buffer:
       for(int x=0; x<_channels.size(); ++x) {
@@ -484,8 +522,11 @@ int s3eSoundGetFreeChannel() {
       fprintf (stderr, "*** %s\n", _audio_error.c_str());
       return -1;
     }
+
   alGenSources(1, &source);
   alSourcei(source, AL_BUFFER, buffer);
+
+  __checkALError("s3eSoundGetFreeChannel/alGenSources");
 
   _channels.push_back(ChannelInfo(source, buffer));
 

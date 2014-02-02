@@ -78,6 +78,45 @@ static strm_dict_t *s_volumeDictionary            = 0;
 
 static SimpleAudioEngine  *s_engine = 0;
 
+#if ! defined(DEFAULT_AUDIO_OUT)
+    #define DEFAULT_AUDIO_OUT "audio:default"
+#endif
+
+#define ERR( code ) #code
+
+static const char *mmrerrlist[] = {
+    ERR( MMR_ERROR_NONE ),
+    ERR( MMR_ERROR_UNKNOWN ),
+    ERR( MMR_ERROR_INVALID_PARAMETER ),
+    ERR( MMR_ERROR_INVALID_STATE ),
+    ERR( MMR_ERROR_UNSUPPORTED_VALUE ),
+    ERR( MMR_ERROR_UNSUPPORTED_MEDIA_TYPE ),
+    ERR( MMR_ERROR_MEDIA_PROTECTED ),
+    ERR( MMR_ERROR_UNSUPPORTED_OPERATION ),
+    ERR( MMR_ERROR_READ ),
+    ERR( MMR_ERROR_WRITE ),
+    ERR( MMR_ERROR_MEDIA_UNAVAILABLE ),
+    ERR( MMR_ERROR_MEDIA_CORRUPTED ),
+    ERR( MMR_ERROR_OUTPUT_UNAVAILABLE ),
+    ERR( MMR_ERROR_NO_MEMORY ),
+    ERR( MMR_ERROR_RESOURCE_UNAVAILABLE ),
+    ERR( MMR_ERROR_MEDIA_DRM_NO_RIGHTS ),
+    ERR( MMR_ERROR_DRM_CORRUPTED_DATA_STORE ),
+    ERR( MMR_ERROR_DRM_OUTPUT_PROTECTION ),
+    ERR( MMR_ERROR_DRM_OPL_HDMI ),
+    ERR( MMR_ERROR_DRM_OPL_DISPLAYPORT ),
+    ERR( MMR_ERROR_DRM_OPL_DVI ),
+    ERR( MMR_ERROR_DRM_OPL_ANALOG_VIDEO ),
+    ERR( MMR_ERROR_DRM_OPL_ANALOG_AUDIO ),
+    ERR( MMR_ERROR_DRM_OPL_TOSLINK ),
+    ERR( MMR_ERROR_DRM_OPL_SPDIF ),
+    ERR( MMR_ERROR_DRM_OPL_BLUETOOTH ),
+    ERR( MMR_ERROR_DRM_OPL_WIRELESSHD ),
+    ERR( MMR_ERROR_MEDIA_DRM_EXPIRED_LICENSE )
+    #undef ERR
+};
+#define NERRS ( sizeof(mmrerrlist) / sizeof(mmrerrlist[0]) )
+
 static int checkALError(const char *funcName)
 {
   int err = alGetError();
@@ -144,10 +183,13 @@ static void printALError(int err)
 static void mmrerror(mmr_context_t *ctxt, const char *msg)
 {
 	const mmr_error_info_t  *err = mmr_error_info( ctxt );
-	unsigned 				 errcode = (err) ? err->error_code : -1;
-	const char 				*name;
+	const int errcode = (err) ? err->error_code : -1;
+	const char *name;
+	if ( errcode >= NERRS || ( name = mmrerrlist[ errcode ] ) == NULL ) {
+	  name = "unknown";
+	}
 
-	fprintf(stderr, "%s: error %d \n", msg, errcode);
+	fprintf(stderr, "%s: error %s/%d \n", msg, name, errcode);
 	s_hasMMRError = true;
 }
 
@@ -299,6 +341,7 @@ static void setBackgroundVolume(float volume)
 SimpleAudioEngine::SimpleAudioEngine()
 {
 	alutInit(0, 0);
+	printf("SimpleAudioEngine: init done.\n");
 }
 
 SimpleAudioEngine::~SimpleAudioEngine()
@@ -404,7 +447,7 @@ void SimpleAudioEngine::preloadBackgroundMusic(const char* pszFilePath, char* ps
 	}
 }
 
-void SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
+bool SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
 {
   if (s_currentBackgroundStr != pszKey) {
     stopBackgroundMusic(true);
@@ -425,12 +468,12 @@ void SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
     
     if (mmr_input_parameters(s_mmrContext, s_repeatDictionary) != 0) {
       mmrerror(s_mmrContext, "input parameters (loop)");
-      return;
+      return false;
     }
   }
   
   if (s_hasMMRError || !s_mmrContext)
-    return;
+    return false;
   
   if (mmr_play(s_mmrContext) < 0) {
     mmrerror(s_mmrContext, "mmr_play");
@@ -439,6 +482,8 @@ void SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
   
   if (!s_hasMMRError)
     s_playStatus = PLAYING;
+
+  return s_hasMMRError;
 }
 
 void SimpleAudioEngine::stopBackgroundMusic(bool bReleaseData)
@@ -450,22 +495,26 @@ void SimpleAudioEngine::stopBackgroundMusic(bool bReleaseData)
   stopBackground(bReleaseData);
 }
 
-void SimpleAudioEngine::pauseBackgroundMusic()
+bool SimpleAudioEngine::pauseBackgroundMusic()
 {
 	if (s_mmrContext && mmr_speed_set(s_mmrContext, 0) < 0)
 	{
 		mmrerror(s_mmrContext, "pause");
 	}
 	s_playStatus = PAUSED;
+
+	return s_hasMMRError;
 }
 
-void SimpleAudioEngine::resumeBackgroundMusic()
+bool SimpleAudioEngine::resumeBackgroundMusic()
 {
 	if (s_mmrContext && mmr_speed_set(s_mmrContext, 1000) < 0)
 	{
 		mmrerror(s_mmrContext, "resume");
 	}
 	s_playStatus = PLAYING;
+
+	return s_hasMMRError;
 }
 
 void SimpleAudioEngine::rewindBackgroundMusic()
