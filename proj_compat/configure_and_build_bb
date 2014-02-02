@@ -190,6 +190,9 @@ fi
 
 script=`basename $0`
 
+# check for terminal-notifier command
+command -v terminal-notifier >/dev/null && { terminalnotifier="terminal-notifier"; } || { echo "*** terminal-notifier command not found."; terminalnotifier="command -v "; }
+
 START=$(date +%s)
 if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $script -nt cmake.ts ]; then
  rm -rf cmake.ts
@@ -217,9 +220,9 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
     $3 ./ \
 && touch cmake.ts \
 && make $VERBOSE $TARGET \
-&& END=$(date +%s); DIFF=$(echo "$END - $START" | bc); terminal-notifier -message "`basename $0` script finished$MESSAGE Execution time: $DIFF sec." -title "BUILDER" >> /dev/null
+&& END=$(date +%s); DIFF=$(echo "$END - $START" | bc); $terminalnotifier -message "$script script finished$MESSAGE Execution time: $DIFF sec." -title BUILDER >> /dev/null
 else
     END=$(date +%s)
     DIFF=$(echo "$END - $START" | bc)
-    make $VERBOSE $TARGET && terminal-notifier -message "`basename $0` script finished$MESSAGE\nExecution time: $DIFF sec." -title "BUILDER" >> /dev/null
+    make $VERBOSE $TARGET && $terminalnotifier -message "$script script finished$MESSAGE\nExecution time: $DIFF sec." -title BUILDER >> /dev/null
 fi
