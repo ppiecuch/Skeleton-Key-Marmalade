@@ -199,7 +199,7 @@ if(NOT SDL_FOUND)
 			OUTPUT_VARIABLE SDL_CFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
        		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --libs 
        	      	 	OUTPUT_VARIABLE SDL_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
-		 message( "** Configuration for SDL library found: ${SDL_VERSION}." )
+		 message( "** Manual configuration for SDL library found: ${SDL_VERSION}." )
        else()
 		 message( "** Configuration for SDL library not found. Forcing ${SDLDIR} for root directory." )
        endif()

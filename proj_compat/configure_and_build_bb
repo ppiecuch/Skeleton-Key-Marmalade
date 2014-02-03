@@ -224,5 +224,5 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
 else
     END=$(date +%s)
     DIFF=$(echo "$END - $START" | bc)
-    make $VERBOSE $TARGET && $terminalnotifier -message "$script script finished$MESSAGE\nExecution time: $DIFF sec." -title BUILDER >> /dev/null
+    make $VERBOSE $TARGET && $terminalnotifier -message "$script script finished$MESSAGE Execution time: $DIFF sec." -title BUILDER >> /dev/null
 fi

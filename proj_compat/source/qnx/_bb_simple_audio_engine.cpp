@@ -23,6 +23,7 @@ THE SOFTWARE.
  ****************************************************************************/
 
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -33,6 +34,9 @@ THE SOFTWARE.
 #include <AL/alc.h>
 #include <AL/alut.h>
 #include <mm/renderer.h>
+#if defined(__BB10__) || BPS_VERSION > 3000000
+# include <mm/renderer/events.h>
+#endif
 #include <bps/soundplayer.h>
 #include <vorbis/vorbisfile.h>
 
@@ -340,8 +344,11 @@ static void setBackgroundVolume(float volume)
 
 SimpleAudioEngine::SimpleAudioEngine()
 {
-	alutInit(0, 0);
-	printf("SimpleAudioEngine: init done.\n");
+  if (!alutInit(0, 0)) {
+    ALenum e = alutGetError();
+    fprintf(stderr, "SimpleAudioEngine/alutInit(%d): %s\n", e, alutGetErrorString(e));
+  }
+  printf("SimpleAudioEngine: init done.\n");
 }
 
 SimpleAudioEngine::~SimpleAudioEngine()
@@ -417,7 +424,9 @@ void SimpleAudioEngine::preloadBackgroundMusic(const char* pszFilePath, char* ps
 			return;
 		}
 
-		if ((s_audioOid = mmr_output_attach(s_mmrContext, "audio:default", "audio")) < 0)
+		const char *audioout = DEFAULT_AUDIO_OUT;
+
+		if ((s_audioOid = mmr_output_attach(s_mmrContext, audioout, "audio")) < 0)
 		{
 			mmrerror(s_mmrContext, "audio:default");
 			return;
@@ -445,6 +454,96 @@ void SimpleAudioEngine::preloadBackgroundMusic(const char* pszFilePath, char* ps
 		s_currentBackgroundStr 	  = pszKey;
 		s_isBackgroundInitialized = true;
 	}
+}
+
+static struct sigevent mmr_sigevent;
+
+static int _mmr_sigevent_handler(void *p) {
+#if defined(__BB10__) || BPS_VERSION > 3000000
+    int rc;
+    mmr_context_t *ctxt = (mmr_context_t *)p;
+    if (NULL == p) {
+        fprintf(stderr, "mmr context error\n");
+        return EXIT_FAILURE;
+    }
+    const mmr_event_t *mmr_event = mmr_event_get( ctxt );
+    if (NULL == mmr_event) {
+        fprintf(stderr, "mmr event error\n");
+        return EXIT_FAILURE;
+    }
+
+    static mmr_state_t last_state = MMR_EVENT_NONE;
+    static int last_speed = 0;
+
+    if ((last_state != mmr_event->state) || (last_speed != mmr_event->speed)) {
+        last_state = mmr_event->state;
+        last_speed = mmr_event->speed;
+        switch (mmr_event->state) {
+            case MMR_STATE_PLAYING:
+               if (0 == mmr_event->speed)
+                   printf("MMRenderer Status: Pausing\n");
+               else 
+                   printf("MMRenderer Status: Playing\n");
+               break;
+            case MMR_STATE_STOPPED:
+               printf("MMRenderer Status: Stopped\n");
+               break;
+            case MMR_STATE_IDLE:
+               printf("MMRenderer Status: Idle\n");
+               break;
+            case MMR_STATE_DESTROYED:
+               printf("MMRenderer Status: Destroyed\n");
+               break;
+            default:
+               printf("MMRenderer Status: Unknown\n");
+               break;
+        }
+    }
+
+    if ((MMR_EVENT_ERROR == mmr_event->type) && (MMR_STATE_STOPPED == mmr_event->state)){
+        /*
+         * We have reached the end.  Do not rearm. Return failure to signal we 
+         * don't want to be recalled.
+         */
+        fprintf(stderr,"MMRenderer Status: No more data\n");
+        return EXIT_FAILURE;
+    }
+
+    rc = mmr_event_arm(ctxt, &mmr_sigevent);
+    if ( rc > 0) {
+        //event is already available, manually arm
+        MsgDeliverEvent(0, &mmr_sigevent);
+    } else if ( rc < 0 ) {
+        fprintf(stderr, "mmr_event_arm() error\n");
+        return EXIT_FAILURE;
+    }
+#endif
+    return EXIT_SUCCESS;
+}
+
+static int _drain_and_arm_mmr_events(mmr_context_t *ctxt) {
+#if defined(__BB10__) || BPS_VERSION > 3000000
+    const mmr_event_t *ev = mmr_event_get(ctxt);
+    int rc;
+
+    while (ev != NULL && ev->type != MMR_EVENT_NONE) {
+        ev = mmr_event_get(ctxt);
+    }
+    if (NULL == ev) {
+        return EXIT_FAILURE;
+    }
+
+    rc = mmr_event_arm(ctxt, &mmr_sigevent);
+    if (rc < 0) {
+        //errno has been set by mmr_event_arm; just return failure
+        return EXIT_FAILURE;
+    } else if (rc > 0) {
+        //event is already available, manually arm
+        MsgDeliverEvent(0, &mmr_sigevent);
+    }
+    //reach here if rc >= 0
+#endif
+    return EXIT_SUCCESS;
 }
 
 bool SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
@@ -480,6 +579,16 @@ bool SimpleAudioEngine::playBackgroundMusic(const char* pszKey, bool bLoop)
     s_hasMMRError = true;
   }
   
+#if defined(__BB10__) || BPS_VERSION > 3000000
+  if (BPS_SUCCESS != bps_add_sigevent_handler( &mmr_sigevent, _mmr_sigevent_handler, s_mmrContext ) ) { 
+        fprintf( stderr, "bps_add_sigevent_handler() failure %s", strerror( errno ) );
+  }
+#endif
+  
+  if ( _drain_and_arm_mmr_events ( s_mmrContext ) ) {
+        fprintf( stderr, "_drain_and_arm_mmr_events() failure %s", strerror( errno ) );
+  }
+
   if (!s_hasMMRError)
     s_playStatus = PLAYING;
 
