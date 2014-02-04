@@ -325,6 +325,18 @@ set( SkeletonKey_Src_Files
 	${LOCAL_SOURCE_ROOT}/stb/stbi_DDS_aug_c.h
 	${LOCAL_SOURCE_ROOT}/stb/SOIL.h
 	${LOCAL_SOURCE_ROOT}/stb/SOIL.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_descriptor.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_effects.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_input.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_stream.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio.h
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_descriptor.h
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_effects.h
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_input.h
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_stream.h
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_utils.cpp
+	${LOCAL_SOURCE_ROOT}/audio_engine/audio_utils.h
 	${LOCAL_SOURCE_ROOT}/AngelcodeFont.cpp
 	${LOCAL_SOURCE_ROOT}/FPSLimit.cpp
 	${LOCAL_SOURCE_ROOT}/SDLGLFont.cpp
@@ -352,7 +364,7 @@ if (NC_BUILD_PLATFORM_QNX)
        PROPERTIES
        COMPILE_FLAGS  "${SDL_CFLAGS} -Wno-psabi -Duint8=uint8_t -Dint8=int8_t -Duint16=uint16_t -Duint32=uint32_t -DBOOL=int -DYES=1 -DNO=0")
    set(PLATF_LIBS
-		libogg.a libvorbis.a libvorbisfile.a
+		vorbisfileS vorbisS oggS
    		freetype
 		GLES_bc EGL GLESv2
 		OpenAL alut bps pps screen asound scoreloopcore
@@ -624,6 +636,7 @@ SET(SkeletonKey_Data_Files
 	door.raw
 	map_locked.raw
 	restart_level.raw
+	menu.mp3
 	#
 	achievements.db
 	levels.db

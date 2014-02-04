@@ -26,11 +26,12 @@
 #include "dgreed/darray.h"
 #include "dgreed/memory.h"
 
+# include <AL/al.h>
+
 #if defined __QNXNTO__
 # include <bps/bps.h>
 # include <bps/navigator.h>
 # include <scoreloop/scoreloopcore.h>
-# include <AL/al.h>
 # include "_bb_simple_audio_engine.h"
 
 #include "../../source/ig2d/ig_distorter.h"
@@ -490,8 +491,14 @@ s3eResult s3eSoundChannelPlay(int channel, int16* start, uint32 numSamples, int3
     fprintf (stderr, "*** %s\n", _audio_error.c_str());
     return S3E_RESULT_ERROR;
   } else if (_channels.size() > channel) {
-    const ChannelInfo &ch = _channels[channel];
+    ChannelInfo &ch = _channels[channel];
     alBufferData(ch.second, AL_FORMAT_STEREO16, start, numSamples, _default_freq);
+    
+    alGenSources(1, &ch.first);
+    alSourcei(ch.first, AL_BUFFER, ch.second);
+
+    __checkALError("s3eSoundChannelPlay/alGenSources");
+
     alSourcei(ch.first, AL_LOOPING, repeat ? AL_TRUE : AL_FALSE);
     alSourcePlay(ch.first);
     return S3E_RESULT_SUCCESS;
@@ -523,12 +530,7 @@ int s3eSoundGetFreeChannel() {
       return -1;
     }
 
-  alGenSources(1, &source);
-  alSourcei(source, AL_BUFFER, buffer);
-
-  __checkALError("s3eSoundGetFreeChannel/alGenSources");
-
-  _channels.push_back(ChannelInfo(source, buffer));
+  _channels.push_back(ChannelInfo(-1, buffer));
 
   return _channels.size()-1;
 }

@@ -19,11 +19,15 @@ if( _CMAKE_IN_TRY_COMPILE )
  include( "${CMAKE_CURRENT_SOURCE_DIR}/qnx.toolchain.config.cmake" OPTIONAL )
 endif()
 
-if( $ENV{QNX_HOST} AND NOT ${QNX_HOST} )
+if( "$ENV{QNX_HOST}" AND NOT "${QNX_HOST}" )
     set( ${QNX_HOST} $ENV{QNX_HOST} )
 endif()
-if( $ENV{QNX_TARGET} AND NOT ${QNX_TARGET} )
+if( "$ENV{QNX_TARGET}" AND NOT "${QNX_TARGET}" )
     set( ${QNX_TARGET} $ENV{QNX_TARGET} )
+endif()
+
+if( ".${QNX_TARGET}" STREQUAL "." AND ".${QNX_HOST}" STREQUAL ".")
+  message( FATAL_ERROR "*** No Blackberry SDK specified. Stop." )
 endif()
 
 set( BLACKBERRY_TOOLCHAIN_ROOT "${QNX_HOST}" )
