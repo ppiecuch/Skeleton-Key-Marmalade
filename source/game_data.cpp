@@ -476,7 +476,8 @@ void GameData::beatLevel() {
 		case GameDifficultyHard: sprintf(buffer1, "complete_hard"); break;
 	}
 	char buffer2[100];
-	sprintf(buffer2, "UPDATE level SET complete='1',seconds='%d',%s='1' WHERE num='%i'",  (int)roundf((levelStart - s3eTimerGetMs())/1000.), buffer1, level);
+	levelTook = (int)roundf((levelStart - s3eTimerGetMs())/1000.);
+	sprintf(buffer2, "UPDATE level SET complete='1',seconds='%d',%s='1' WHERE num='%i'",  levelTook, buffer1, level);
 	db.exe(std::string(buffer2));
 	IGLog("GameData marked level as complete");
 }

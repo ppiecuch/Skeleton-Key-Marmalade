@@ -114,10 +114,28 @@ int s3eSoundGetFreeChannel();
 const char* s3eSoundGetErrorString();
 void s3eSoundSetInt(s3eEnum f, int v);
 
-/// Leaderboard support
+/// Leadersboard support
 typedef void* SCL_ScoreList;
 typedef void (*SCL_Callback)(int, SCL_ScoreList); // request callback: mode, scores list
 enum SCL_Status { SC_STATUS_NONE, SC_STATUS_BUSY, SC_STATUS_ERROR, SC_STATUS_DIRTY, SC_STATUS_DONE };
+
+#define SC_USERNAME_MAX 17
+
+bool SCL_SetLeadersboardDirty(const unsigned int aMode);
+bool SCL_IsMyLeadersboardAt(const SCL_ScoreList score_list, int pos);
+int SCL_GetLeadersboardRankAt(const SCL_ScoreList score_list, int pos);
+const char *SCL_GetLeadersboardEmailAt(const SCL_ScoreList score_list, int pos);
+const char *SCL_GetLeadersboardUserAt(const SCL_ScoreList score_list, int pos);
+double SCL_GetLeadersboardResultAt(const SCL_ScoreList score_list, int pos);
+int SCL_GetLeadersboardCount(const SCL_ScoreList score_list);
+SCL_ScoreList SCL_GetLeadersboard(const unsigned int aMode);
+SCL_Status SCL_GetLeadersboardStatus(const unsigned int aMode);
+int SCL_GetLeaderboardLiveRequests();
+bool SCL_RequestLeadersboard(const unsigned int aMode, SCL_Callback callback);
+bool SCL_SubmitScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel);
+bool SCL_ReportScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel);
+void SCL_CloseLeadersboard();
+bool SCL_InitLeadersboard();
 
 /// Utility macros:
 #define f_ssprintf(...)                                 \

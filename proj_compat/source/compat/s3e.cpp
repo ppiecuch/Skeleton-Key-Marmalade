@@ -482,57 +482,78 @@ void s3eAudioSetInt(s3eEnum f, int v) {
   if (f == S3E_AUDIO_VOLUME) _audio->setEffectsVolume( clamp(v, 0, 255)/255. );
 }
 
-typedef pair<ALuint, ALuint> ChannelInfo;
-static vector<ChannelInfo> _channels;
+// allocated sound information:
+typedef pair<ALuint, int16*> BufferInfo;
+typedef pair<ALuint, BufferInfo> ChannelInfo;
+static map<ALuint, BufferInfo> _channels;
+static vector<BufferInfo> _buffers;
+static vector<ALuint> _sources;
+// end.
 
 s3eResult s3eSoundChannelPlay(int channel, int16* start, uint32 numSamples, int32 repeat, int32 loopfrom) {
   if (channel < 0) {
     _audio_error = f_ssprintf("s3eSoundChannelPlay: invalid channel %d (of %d allocated).", channel, _channels.size());
     fprintf (stderr, "*** %s\n", _audio_error.c_str());
     return S3E_RESULT_ERROR;
-  } else if (_channels.size() > channel) {
-    ChannelInfo &ch = _channels[channel];
-    alBufferData(ch.second, AL_FORMAT_STEREO16, start, numSamples, _default_freq);
-    
-    alGenSources(1, &ch.first);
-    alSourcei(ch.first, AL_BUFFER, ch.second);
-
-    __checkALError("s3eSoundChannelPlay/alGenSources");
-
-    alSourcei(ch.first, AL_LOOPING, repeat ? AL_TRUE : AL_FALSE);
-    alSourcePlay(ch.first);
-    return S3E_RESULT_SUCCESS;
   } else {
-    _audio_error = f_ssprintf("s3eSoundChannelPlay: invalid channel %d (of %d allocated).", channel, _channels.size());
-    fprintf (stderr, "*** %s\n", _audio_error.c_str());
-    return S3E_RESULT_ERROR;
+
+    // look for this buffer:
+    int b = 0; for(int b=0; b<_buffers.size(); ++b) {
+      const BufferInfo &binfo = _buffers[b];
+      if (binfo.second == start)
+	break;
+    }
+
+    BufferInfo binfo;
+    if (b == _buffers.size()) { // add new buffer
+      ALuint buffer;
+      alGenBuffers (1, &buffer);
+      if (__checkALError("s3eSoundChannelPlay/alGenBuffers") != AL_NO_ERROR) {
+	printf("*** adding new audio buffer %d.\n", buffer);
+	alBufferData(buffer, AL_FORMAT_STEREO16, start, numSamples, _default_freq);
+	_buffers.push_back(binfo = BufferInfo(buffer, start));
+      } else {
+	_audio_error = "s3eSoundChannelPlay: failed with alGenBuffers.";
+	fprintf (stderr, "*** %s\n", _audio_error.c_str());
+	return S3E_RESULT_ERROR;
+      }
+    }
+
+    alSourcei(channel, AL_BUFFER, binfo.first);
+    alSourcei(channel, AL_LOOPING, repeat ? AL_TRUE : AL_FALSE);
+    alSourcePlay(channel);
+
+    _channels[channel] = binfo;
+
+    return S3E_RESULT_SUCCESS;
   }
 }
 int s3eSoundGetFreeChannel() {
 
   __checkALError("s3eSoundGetFreeChannel"); // clear error message
 
-  ALuint source;		
-  ALuint buffer;
-  alGenBuffers (1, &buffer);
-  if (__checkALError("s3eSoundGetFreeChannel/alGenBuffers") != AL_NO_ERROR)
-    {
-      // look for already allocated free buffer:
-      for(int x=0; x<_channels.size(); ++x) {
-	const ChannelInfo &ch = _channels[x];
-	ALint sourceState;
-	alGetSourcei(ch.first, AL_SOURCE_STATE, &sourceState);
-	if (sourceState != AL_PLAYING)
-	  return x;
-      }
-      _audio_error = "s3eSoundGetFreeChannel: failed with alGenBuffers.";
-      fprintf (stderr, "*** %s\n", _audio_error.c_str());
-      return -1;
+  // look for free pre-allocated source:
+  for(int x=0; x<_sources.size(); ++x) {
+    ALint sourceState;
+    alGetSourcei(_sources[x], AL_SOURCE_STATE, &sourceState);
+    if (sourceState != AL_PLAYING) {
+      alSourcei(_sources[x], AL_BUFFER, 0);
+      return _sources[x];
     }
+  }
 
-  _channels.push_back(ChannelInfo(-1, buffer));
-
-  return _channels.size()-1;
+  // create and add new source:
+  ALuint source;		
+  alGenSources(1, &source);
+  if (__checkALError("s3eSoundGetFreeChannel/alGenSources") != AL_NO_ERROR)
+    {
+      _sources.push_back(source);
+      return source;
+    }
+  
+  _audio_error = "s3eSoundGetFreeChannel: failed with alGenSources.";
+  fprintf (stderr, "*** %s\n", _audio_error.c_str());
+  return -1;
 }
 const char* s3eSoundGetErrorString() { return _audio_error.c_str(); }
 void s3eSoundSetInt(s3eEnum f, int v) {
@@ -1123,7 +1144,7 @@ static struct ScoreSubmitCmd {
 
 #define SCORE_CHECK_ERR(code) if(SC_Error_t _err = (code)) { fprintf(stderr, "^^ %s failed at line %d with error code: %d.\n", __FUNCTION__, __LINE__, _err); return false; }
 
-// inclue Scoreloop leaderboard information:
+// inclue Scoreloop leadersboard information:
 #include "../sc.info.h"
 
 #define QUEUE_STR_LEN 32
@@ -1134,7 +1155,7 @@ typedef struct {
   double result;       // time
   unsigned int mode;   // skill
   double minor_result; // numer of moves
-  unsigned int level;  // achivments id
+  unsigned int level;  // level number
 } QueuedScore;
 
 #ifdef __QNXNTO__
@@ -1306,7 +1327,7 @@ void _controllerCallback(void* userData, SC_Error_t completionStatus) {
 }
 
 // requires SC creditentials
-bool SCL_InitLeaderboard() {
+bool SCL_InitLeadersboard() {
     const char *aGameId       = SC_GameID;
     const char *aGameSecret   = SC_GameSecret;
     const char *aGameCurrency = "JIA";
@@ -1341,7 +1362,7 @@ bool SCL_InitLeaderboard() {
     return (SC_OK == errCode);
 }
 
-void SCL_CloseLeaderboard() {
+void SCL_CloseLeadersboard() {
     SC_Client_Release(score_client);
     _close_queues();
 }
@@ -1370,7 +1391,7 @@ bool SCL_SubmitScore(const double aResult, const unsigned int aMode, const doubl
         return false;
 }
 
-bool SCL_RequestLeaderboard(const unsigned int aMode, SCL_Callback callback) {
+bool SCL_RequestLeadersboard(const unsigned int aMode, SCL_Callback callback) {
 
     assert(aMode < SC_NUM_MODES);
     
@@ -1411,28 +1432,28 @@ int SCL_GetLeaderboardLiveRequests() {
     return live_requests;
 }
 
-SCL_Status SCL_GetLeaderboardStatus(const unsigned int aMode) {
+SCL_Status SCL_GetLeadersboardStatus(const unsigned int aMode) {
     assert(aMode < SC_NUM_MODES);
     return scores[aMode].status;
 }
 
-SCL_ScoreList SCL_GetLeaderboard(const unsigned int aMode) {
+SCL_ScoreList SCL_GetLeadersboard(const unsigned int aMode) {
     assert(aMode < SC_NUM_MODES);
     return (SCL_ScoreList*)&scores[aMode];
 }
 
-int SCL_GetLeaderboardCount(const SCL_ScoreList score_list) {
+int SCL_GetLeadersboardCount(const SCL_ScoreList score_list) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     return SC_ScoreList_GetCount(cmd->list);
 }
 
-double SCL_GetLeaderboardResultAt(const SCL_ScoreList score_list, int pos) {
+double SCL_GetLeadersboardResultAt(const SCL_ScoreList score_list, int pos) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
     return SC_Score_GetResult(score);
 }
 
-const char *SCL_GetLeaderboardUserAt(const SCL_ScoreList score_list, int pos) {
+const char *SCL_GetLeadersboardUserAt(const SCL_ScoreList score_list, int pos) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
     SC_User_h user = SC_Score_GetUser(score);
@@ -1440,7 +1461,7 @@ const char *SCL_GetLeaderboardUserAt(const SCL_ScoreList score_list, int pos) {
     return login ? SC_String_GetData(login) : "<?>";
 }
 
-const char *SCL_GetLeaderboardEmailAt(const SCL_ScoreList score_list, int pos) {
+const char *SCL_GetLeadersboardEmailAt(const SCL_ScoreList score_list, int pos) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     if (cmd->list) {
         SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
@@ -1451,7 +1472,7 @@ const char *SCL_GetLeaderboardEmailAt(const SCL_ScoreList score_list, int pos) {
     return "?";
 }
 
-int SCL_GetLeaderboardRankAt(const SCL_ScoreList score_list, int pos) {
+int SCL_GetLeadersboardRankAt(const SCL_ScoreList score_list, int pos) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     if (cmd->list) {
         SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
@@ -1460,7 +1481,7 @@ int SCL_GetLeaderboardRankAt(const SCL_ScoreList score_list, int pos) {
     return 0;
 }
 
-bool SCL_IsMyLeaderboardAt(const SCL_ScoreList score_list, int pos) {
+bool SCL_IsMyLeadersboardAt(const SCL_ScoreList score_list, int pos) {
     ScoreGetCmd *cmd = (ScoreGetCmd*)score_list;
     if (cmd->list) {
         SC_Score_h score = SC_ScoreList_GetAt(cmd->list, pos);
@@ -1469,7 +1490,7 @@ bool SCL_IsMyLeaderboardAt(const SCL_ScoreList score_list, int pos) {
     return false;
 }
 
-bool SCL_SetLeaderboardDirty(const unsigned int aMode) {
+bool SCL_SetLeadersboardDirty(const unsigned int aMode) {
     assert(aMode < SC_NUM_MODES);
     if (scores[aMode].status != SC_STATUS_BUSY) {
         scores[aMode].status = SC_STATUS_DIRTY;

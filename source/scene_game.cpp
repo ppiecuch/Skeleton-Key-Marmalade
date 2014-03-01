@@ -5,6 +5,7 @@
 #include "sounds.h"
 #include "game_data.h"
 #include "achievements.h"
+#include "leadersboard.h"
 #include "scene_menu.h"
 #include "scene_game_menu.h"
 #include "scene_select_level.h"
@@ -270,10 +271,10 @@ void SceneGame::restartLevel() {
 		shakeZ = 0;
 	}
 
-	// achievement
-	isAchievementActive = false;
-	achievementCount = 0;
-	achievementStage = 0;
+	// achievement and leadersboard
+	isAchievementActive = isLeadersboardActive = false;
+	achievementCount = leadersboardCount = 0;
+	achievementStage = leadersboardStage = 0;
 }
 
 void SceneGame::moveKeys(int dir) {
@@ -412,6 +413,9 @@ void SceneGame::moveKeys(int dir) {
 		
 		// delete the saved game - if they continue, then load the next one
 		deleteSavedGame();
+
+		// check for leadersboard
+		checkForLeadersboard();
 
 		// check for achievements
 		SQLite3Wrapper *db = NULL;
@@ -883,11 +887,40 @@ void SceneGame::animateAchievement(int achievementId) {
 	achievementStart = s3eTimerGetMs();
 }
 
+void SceneGame::animateLeadersboard(bool win_or_top10) {
+	// add the graphics
+	IGSprite* spriteLeadersboard = new IGSprite(win_or_top10?"game_leadersboard_number1":"game_leadersboard_top10", IGPoint(160,626), 30, GameTagLeadersboardAnim); // it will move up to y=398
+	this->addChild(spriteLeadersboard);
+
+	// get the achievement
+	const LeadersboardScore &a = Achievements::getInstance()->getAchievement(achievementId);
+
+	// add the labels
+	IGLabel* labelName = new IGLabel("font_gabriola_22b", a.name.c_str(), IGPoint(220,635), IGRect(200,60), 31, GameTagLeadersboardTitle);
+	labelName->setColor(255,255,255,255);
+	this->addChild(labelName);
+	IGLabel* labelDescription = new IGLabel("font_gabriola_14", a.description.c_str(), IGPoint(220,674), IGRect(200,60), 31, GameTagLeadersboardDescription);
+	labelDescription->setColor(196,207,226,255);
+	this->addChild(labelDescription);
+
+	// start the leadersboard
+	leadersboardCount = 0;
+	isLeadersboardActive = true;
+	leadersboardStage = 0;
+	leadersboardtStart = s3eTimerGetMs();
+}
+
 void SceneGame::removeAchievement() {
 	if(isAchievementActive) {
 		this->removeChildByTag(GameTagAchievementBackground);
 		this->removeChildByTag(GameTagAchievementTitle);
 		this->removeChildByTag(GameTagAchievementDescription);
+	}
+}
+
+void SceneGame::checkForLeadersboard() {
+	if(Leadersboard::getInstance()->isAvailable()) {
+	  
 	}
 }
 

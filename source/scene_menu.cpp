@@ -6,6 +6,7 @@
 #include "scene_map.h"
 #include "scene_instructions.h"
 #include "scene_achievements.h"
+#include "scene_leadersboard.h"
 #include "scene_options.h"
 
 // play game button
@@ -68,6 +69,26 @@ void MenuButtonAchievements::buttonReleased() {
 	IGDirector::getInstance()->switchScene(new SceneAchievements());
 }
 
+// leadersboard button
+MenuButtonLeadersboard::MenuButtonLeadersboard() {
+	imageNormalName = std::string("menu_leadersboard");
+	imageNormal = IGResourceManager::getInstance()->getImage(imageNormalName);
+	imageSelectedName = std::string("menu_leadersboard2");
+	imageSelected = IGResourceManager::getInstance()->getImage(imageSelectedName);
+	image = imageNormal;
+	this->set(IGPoint(160,396));
+	touchSize = IGRect(320,56);
+	z = 2;
+	tag = 0;
+}
+void MenuButtonLeadersboard::buttonPressed() {
+	Sounds::getInstance()->playClick();
+}
+void MenuButtonLeadersboard::buttonReleased() {
+	parent->removeAllChildren();
+	IGDirector::getInstance()->switchScene(new SceneLeadersboard());
+}
+
 // options button
 MenuButtonOptions::MenuButtonOptions() {
 	imageNormalName = std::string("menu_options");
@@ -75,7 +96,7 @@ MenuButtonOptions::MenuButtonOptions() {
 	imageSelectedName = std::string("menu_options2");
 	imageSelected = IGResourceManager::getInstance()->getImage(imageSelectedName);
 	image = imageNormal;
-	this->set(IGPoint(160,396));
+	this->set(IGPoint(160,452));
 	touchSize = IGRect(320,56);
 	z = 2;
 	tag = 0;
@@ -96,7 +117,7 @@ MenuButtonOtherGames::MenuButtonOtherGames() {
 	imageSelectedName = std::string("menu_other_games2");
 	imageSelected = IGResourceManager::getInstance()->getImage(imageSelectedName);
 	image = imageNormal;
-	this->set(IGPoint(160,452));
+	this->set(IGPoint(160,508));
 	touchSize = IGRect(320,56);
 	z = 2;
 	tag = 0;
@@ -130,6 +151,7 @@ SceneMenu::SceneMenu() {
 	MenuButtonInstructions* buttonInstructions = new MenuButtonInstructions();
 	MenuButtonOptions* buttonOptions = new MenuButtonOptions();
 	MenuButtonAchievements* buttonAchievements = new MenuButtonAchievements();
+	MenuButtonLeadersboard* buttonLeadersboard = new MenuButtonLeadersboard();
 	MenuButtonOtherGames* buttonOtherGames = new MenuButtonOtherGames();
 	this->addChild(buttonPlayGame);
 	this->addChild(buttonInstructions);

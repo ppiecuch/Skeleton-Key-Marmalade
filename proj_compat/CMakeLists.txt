@@ -246,6 +246,8 @@ set( SkeletonKey_Src_Files
 	${SOURCE_ROOT}/scene_options.cpp
 	${SOURCE_ROOT}/scene_achievements.h
 	${SOURCE_ROOT}/scene_achievements.cpp
+	${SOURCE_ROOT}/scene_leadersboard.h
+	${SOURCE_ROOT}/scene_leadersboard.cpp
 	${SOURCE_ROOT}/settings.h
 	${SOURCE_ROOT}/settings.cpp
 	${SOURCE_ROOT}/sqlite3_wrapper.h
@@ -256,6 +258,8 @@ set( SkeletonKey_Src_Files
 	${SOURCE_ROOT}/game_data.cpp
 	${SOURCE_ROOT}/achievements.h
 	${SOURCE_ROOT}/achievements.cpp
+	${SOURCE_ROOT}/leadersboard.h
+	${SOURCE_ROOT}/leadersboard.cpp
 	## (source/ig2d)
 	${SOURCE_ROOT}/ig2d/ig.h
 	${SOURCE_ROOT}/ig2d/ig_animation.h
@@ -315,6 +319,8 @@ set( SkeletonKey_Src_Files
     	${LOCAL_SOURCE_ROOT}/compat/IwResManager.h
     	${LOCAL_SOURCE_ROOT}/compat/s3e.h
     	${LOCAL_SOURCE_ROOT}/compat/s3e.cpp
+    	${LOCAL_SOURCE_ROOT}/compat/emyl.h
+    	${LOCAL_SOURCE_ROOT}/compat/emyl.cpp
 	${LOCAL_SOURCE_ROOT}/stb/image_DXT.h
 	${LOCAL_SOURCE_ROOT}/stb/image_DXT.c
 	${LOCAL_SOURCE_ROOT}/stb/image_helper.h
@@ -422,8 +428,6 @@ SET(SkeletonKey_Data_Files
 	#
 	graphics/leadersboard/leadersboard_header.png
 	graphics/leadersboard/leadersboard_sl_badge256.png
-	graphics/leadersboard/leadersboard_number1.png
-	graphics/leadersboard/leadersboard_top10.png
 	#
 	graphics/backgrounds/background_black.png
 	graphics/backgrounds/background_forest_dark.png
@@ -442,6 +446,8 @@ SET(SkeletonKey_Data_Files
 	graphics/game/playbook/game_background_ship.png
 	graphics/game/playbook/game_wood.png
 	graphics/game/game_achievement.png
+	graphics/game/game_leadersboard_number1.png
+	graphics/game/game_leadersboard_top10.png
 	graphics/game/game_background_beach.png
 	graphics/game/game_background_caves.png
 	graphics/game/game_background_forest.png

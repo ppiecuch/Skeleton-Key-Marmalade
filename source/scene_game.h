@@ -36,7 +36,10 @@ typedef enum {
 	GameTagAchievementBackground = 6,
 	GameTagAchievementTitle = 7,
 	GameTagAchievementDescription = 8,
-	GameTagMessage = 9,
+	GameTagLeadersboardAnim = 9,
+	GameTagLeadersboardTitle = 10,
+	GameTagLeadersboardDescription = 11,
+	GameTagMessage = 12,
 	GameTagTiles = 100,
 	GameTagKeys = 200
 } GameTags;
@@ -64,7 +67,7 @@ public:
 	int messageCount;
 	int messageStage;
 
-	// achievements
+	// achievements and leadersboard
 	void unlockAchievement(int achievementId);
 	void animateAchievement(int achievementId);
 	void removeAchievement();
@@ -72,6 +75,11 @@ public:
 	int achievementCount;
 	int achievementStage;
 	int64 achievementStart;
+	void checkForLeadersboard();
+	void animateLeadersboard(bool win_or_top10);
+	int leadersboardCount;
+	int leadersboardStage;
+	bool isLeadersboardActive;
 
 	// misc methods
 	void perfectLevel(); // set current level to perfect

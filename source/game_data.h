@@ -25,7 +25,8 @@ typedef enum {
 typedef enum {
 	GameDifficultyEasy = 0,
 	GameDifficultyMedium = 1,
-	GameDifficultyHard = 2
+	GameDifficultyHard = 2,
+	GameNumDifficulties
 } GameDifficulties;
 
 // tile types
@@ -90,7 +91,7 @@ public:
 	int stage;
 	int difficulty;
 	int level;
-	int64 levelStart; // level start time
+	int64 levelStart, levelTook; // level start time
 	char tileString[49];
 	char tiles[6][8];
 	std::vector<GameData::Key> keys;

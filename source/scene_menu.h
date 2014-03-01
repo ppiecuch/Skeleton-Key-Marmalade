@@ -24,6 +24,12 @@ public:
 	void buttonPressed();
 	void buttonReleased();
 };
+class MenuButtonLeadersboard: public IGButton {
+public:
+	MenuButtonLeadersboard();
+	void buttonPressed();
+	void buttonReleased();
+};
 class MenuButtonOptions: public IGButton {
 public:
 	MenuButtonOptions();
