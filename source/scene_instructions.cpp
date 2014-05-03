@@ -63,8 +63,8 @@ void InstructionsButtonNext::buttonReleased() {
 }
 
 // instructions scene
-SceneInstructions::SceneInstructions() {
-	IGScene::IGScene();
+SceneInstructions::SceneInstructions() : IGScene()
+{
 	IGLog("SceneInstructions init");
 
 	// load the resources

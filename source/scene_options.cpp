@@ -93,8 +93,8 @@ void OptionsButtonResetCancel::buttonReleased() {
 }
 
 // options scene
-SceneOptions::SceneOptions() {
-	IGScene::IGScene();
+SceneOptions::SceneOptions() : IGScene()
+{
 	IGLog("SceneOptions init");
 
 	// load the resources

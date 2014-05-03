@@ -154,8 +154,8 @@ std::string GameTile::getResourceName(int _tileType) {
 }
 
 // scene game
-SceneGame::SceneGame() {
-	IGScene::IGScene();
+SceneGame::SceneGame() : IGScene()
+{
 	IGLog("SceneGame init");
 
 	// set the game as active
@@ -892,14 +892,17 @@ void SceneGame::animateLeadersboard(bool win_or_top10) {
 	IGSprite* spriteLeadersboard = new IGSprite(win_or_top10?"game_leadersboard_number1":"game_leadersboard_top10", IGPoint(160,626), 30, GameTagLeadersboardAnim); // it will move up to y=398
 	this->addChild(spriteLeadersboard);
 
-	// get the achievement
-	const LeadersboardScore &a = Achievements::getInstance()->getAchievement(achievementId);
+	// get the leadersboard
+	const LeadersboardScore &a = Leadersboard::getInstance()->getMyLeadersboardScore();
+
+	std::string name = a.name;
+	std::string description = "";
 
 	// add the labels
-	IGLabel* labelName = new IGLabel("font_gabriola_22b", a.name.c_str(), IGPoint(220,635), IGRect(200,60), 31, GameTagLeadersboardTitle);
+	IGLabel* labelName = new IGLabel("font_gabriola_22b", name.c_str(), IGPoint(220,635), IGRect(200,60), 31, GameTagLeadersboardTitle);
 	labelName->setColor(255,255,255,255);
 	this->addChild(labelName);
-	IGLabel* labelDescription = new IGLabel("font_gabriola_14", a.description.c_str(), IGPoint(220,674), IGRect(200,60), 31, GameTagLeadersboardDescription);
+	IGLabel* labelDescription = new IGLabel("font_gabriola_14", description.c_str(), IGPoint(220,674), IGRect(200,60), 31, GameTagLeadersboardDescription);
 	labelDescription->setColor(196,207,226,255);
 	this->addChild(labelDescription);
 
@@ -907,7 +910,7 @@ void SceneGame::animateLeadersboard(bool win_or_top10) {
 	leadersboardCount = 0;
 	isLeadersboardActive = true;
 	leadersboardStage = 0;
-	leadersboardtStart = s3eTimerGetMs();
+	leadersboardStart = s3eTimerGetMs();
 }
 
 void SceneGame::removeAchievement() {

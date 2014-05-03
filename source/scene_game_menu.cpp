@@ -168,8 +168,8 @@ void GameMenuButtonErrorContinue::buttonReleased() {
 }
 
 // scene game menu
-SceneGameMenu::SceneGameMenu() {
-	IGScene::IGScene();
+SceneGameMenu::SceneGameMenu() : IGScene()
+{
 	IGLog("SceneGameMenu init");
 	errorUp = false;
 

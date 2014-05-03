@@ -64,8 +64,8 @@ void AchievementsButtonNext::buttonReleased() {
 }
 
 // achievements scene
-SceneAchievements::SceneAchievements() {
-	IGScene::IGScene();
+SceneAchievements::SceneAchievements() : IGScene()
+{
 	IGLog("SceneAchievements init");
 	
 	// load the resources

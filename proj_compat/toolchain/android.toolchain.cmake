@@ -521,7 +521,7 @@ __INIT_VARIABLE( ANDROID_ABI OBSOLETE_ARM_TARGET OBSOLETE_ARM_TARGETS VALUES ${A
 #verify that target ABI is supported
 list( FIND ANDROID_SUPPORTED_ABIS "${ANDROID_ABI}" __androidAbiIdx )
 if( __androidAbiIdx EQUAL -1 )
- string( REPLACE ";" "\", \"", PRINTABLE_ANDROID_SUPPORTED_ABIS  "${ANDROID_SUPPORTED_ABIS}" )
+ string( REPLACE ";" "\", \"" PRINTABLE_ANDROID_SUPPORTED_ABIS  "${ANDROID_SUPPORTED_ABIS}" )
  message( FATAL_ERROR "Specified ANDROID_ABI = \"${ANDROID_ABI}\" is not supported by this cmake toolchain or your NDK/toolchain.
    Supported values are: \"${PRINTABLE_ANDROID_SUPPORTED_ABIS}\"
    " )
@@ -735,6 +735,7 @@ set( LIBRARY_OUTPUT_PATH "${LIBRARY_OUTPUT_PATH_ROOT}/libs/${ANDROID_NDK_ABI_NAM
 list( APPEND ANDROID_SYSTEM_INCLUDE_DIRS "${ANDROID_SYSROOT}/usr/include" "${ANDROID_NDK}/sources/cpufeatures")
 if( __stlIncludePath AND EXISTS "${__stlIncludePath}" )
  list( APPEND ANDROID_SYSTEM_INCLUDE_DIRS "${__stlIncludePath}" )
+ list( APPEND ANDROID_SYSTEM_INCLUDE_DIRS "${__stlIncludePath}/ext" )
 endif()
 
 #STL bits includes

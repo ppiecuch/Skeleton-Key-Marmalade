@@ -9,8 +9,9 @@
 class CIw2DImage
 {
  public:
-    virtual float GetWidth() = 0;
-    virtual float GetHeight() = 0;
+  virtual ~CIw2DImage() { }
+  virtual float GetWidth() = 0;
+  virtual float GetHeight() = 0;
 };
 
 enum CIw2DFontAlign

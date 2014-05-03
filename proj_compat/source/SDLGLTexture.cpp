@@ -9,7 +9,7 @@
 #include <string>
 #include <iostream>
 #include "SDLGLTexture.hpp"
-#include <SDL/SDL_image.h>
+#include <SDL_image.h>
 
 extern "C" SDL_Surface *IMG_Load(const char *imagename);
 

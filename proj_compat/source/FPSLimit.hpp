@@ -10,11 +10,7 @@
 #ifndef __FPSLIMIT_H__
 #define __FPSLIMIT_H__
 
-#ifdef __APPLE__
-  #include "SDL.h"
-#else
-  #include "SDL/SDL.h"
-#endif
+#include "SDL.h"
 
 class FPSLimit {
   public:

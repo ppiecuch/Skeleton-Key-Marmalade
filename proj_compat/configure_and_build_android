@@ -4,10 +4,47 @@ export ANDROID_SDK=~/Software/0-Runtime/android-sdk-mac_x86
 export ANDROID_NDK=$HOME/Software/0-Runtime/android-ndk-r8c
 export PATH=$PATH:$ANDROID_NDK/tools:$ANDROID_NDK/platform-tools
 
-$TARGET=""
+TOOLCHAIN_FILE="`pwd`/toolchain/android.toolchain.cmake"
+if [ -f CMakeCache.txt ]; then
+    if grep --quiet "$TOOLCHAIN_FILE" CMakeCache.txt; then
+	# same toolchain
+	echo "** Continue using $TOOLCHAIN_FILE"
+    else
+	# diffrent toolchain - reload
+	echo "** Toolchain not found - force to reconfigure build."
+	PLAT=`grep PLAT_SDK CMakeCache.txt | cut -f 2 -d=`
+	rm -rf cmake.ts CMakeCache.txt CMakeFiles
+    fi
+fi
 
-cmake -DCMAKE_TOOLCHAIN_FILE="`pwd`/toolchain/android.toolchain.cmake" \
-	-DANDROID_ABI=armeabi-v7a \
-	-DANDROID_NATIVE_API_LEVEL=9 \
-	$TARGET \
-    && make
+TARGET=""
+VERBOSE="0"
+
+sdl_root="$HOME/Software/SDL-1"
+if [ ! -d $sdl_root ]; then
+    echo "** SDL source not found at $sdl_root"
+    exit
+fi
+
+gles2bc_root="$HOME/Private/Projekty/_commonRuntime/GLES_bc"
+if [ ! -d $gles2bc_root ]; then
+    echo "** GLES2_bc source not found at $gles2bc_root"
+    exit
+fi
+
+openal_root="$HOME/Private/Projekty/_commonRuntime/_Sound/openal-soft"
+if [ ! -d $openal_root ]; then
+    echo "** OpenAL source not found at $openal_root"
+    exit
+fi
+
+cmake -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" \
+    -DANDROID=1 \
+    -DANDROID_ABI=armeabi-v7a \
+    -DANDROID_NATIVE_API_LEVEL=9 \
+    -DSDLDIR="$sdl_root" \
+    -DGLES2BCDIR="$gles2bc_root" \
+    -DOPENALDIR="$openal_root" \
+    -G"Unix Makefiles" \
+    $TARGET \
+    && make VERBOSE=$VERBOSE

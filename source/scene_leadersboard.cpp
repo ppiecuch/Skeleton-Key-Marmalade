@@ -64,8 +64,8 @@ void LeadersboardButtonNext::buttonReleased() {
 }
 
 // leadersboard scene
-SceneLeadersboard::SceneLeadersboard() {
-	IGScene::IGScene();
+SceneLeadersboard::SceneLeadersboard() : IGScene()
+{
 	IGLog("SceneLeadersboard init");
 	
 	// load the resources

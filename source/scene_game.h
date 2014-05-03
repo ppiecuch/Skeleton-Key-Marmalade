@@ -79,6 +79,7 @@ public:
 	void animateLeadersboard(bool win_or_top10);
 	int leadersboardCount;
 	int leadersboardStage;
+	int64 leadersboardStart;
 	bool isLeadersboardActive;
 
 	// misc methods

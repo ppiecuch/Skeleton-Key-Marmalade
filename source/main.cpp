@@ -14,7 +14,9 @@
 #include "sounds.h"
 #include "game_data.h"
 #include "achievements.h"
+#include "leadersboard.h"
 #include "config.h"
+#include "debug_ui.h"
 
 // How big a tick difference is considered 'time warp', i.e. skip the time
 // (to avoid physics blowing up)
@@ -93,6 +95,7 @@ void gameInit() {
 	GameData::getInstance();
 	Achievements::getInstance();
 	AchievementData::getInstance();
+	Leadersboard::getInstance();
 	Sounds::getInstance();
 
 	// initialize callback functions
@@ -191,6 +194,7 @@ int main(int argc, char* argv[]) {
 
 		// render graphics
 		IGDirector::getInstance()->display();
+		display_debug_ui();
 		Iw2DSurfaceShow();
 		
 		// attempt frame rate

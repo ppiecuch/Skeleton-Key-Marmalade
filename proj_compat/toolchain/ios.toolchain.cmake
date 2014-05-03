@@ -114,11 +114,14 @@ endif (${IOS_PLATFORM} STREQUAL "OS")
 # Setup iOS developer location unless specified manually with CMAKE_IOS_DEVELOPER_ROOT
 # Note Xcode 4.3 changed the installation location, choose the most recent one available
 set (XCODE_POST_43_ROOT "/Applications/Xcode.app/Contents/Developer/Platforms/${IOS_PLATFORM_LOCATION}/Developer")
+set (XCODE_POST_43_HOME_ROOT "$ENV{HOME}/Applications/Xcode.app/Contents/Developer/Platforms/${IOS_PLATFORM_LOCATION}/Developer")
 set (XCODE_PRE_43_ROOT "/Developer/Platforms/${IOS_PLATFORM_LOCATION}/Developer")
 if (NOT DEFINED CMAKE_IOS_DEVELOPER_ROOT)
 	if (EXISTS ${XCODE_POST_43_ROOT})
 		set (CMAKE_IOS_DEVELOPER_ROOT ${XCODE_POST_43_ROOT})
-	elseif(EXISTS ${XCODE_PRE_43_ROOT})
+	elseif (EXISTS ${XCODE_POST_43_HOME_ROOT})
+		set (CMAKE_IOS_DEVELOPER_ROOT ${XCODE_POST_43_HOME_ROOT})
+	elseif (EXISTS ${XCODE_PRE_43_ROOT})
 		set (CMAKE_IOS_DEVELOPER_ROOT ${XCODE_PRE_43_ROOT})
 	endif (EXISTS ${XCODE_POST_43_ROOT})
 endif (NOT DEFINED CMAKE_IOS_DEVELOPER_ROOT)
@@ -144,7 +147,7 @@ set (CMAKE_OSX_SYSROOT ${CMAKE_IOS_SDK_ROOT} CACHE PATH "Sysroot used for iOS su
 # set the architecture for iOS 
 # NOTE: Currently both ARCHS_STANDARD_32_BIT and ARCHS_UNIVERSAL_IPHONE_OS set armv7 only, so set both manually
 if (${IOS_PLATFORM} STREQUAL "OS")
-	set (IOS_ARCH armv6 armv7)
+	set (IOS_ARCH armv6 armv7 armv7s)
 else (${IOS_PLATFORM} STREQUAL "OS")
 	set (IOS_ARCH i386)
 endif (${IOS_PLATFORM} STREQUAL "OS")

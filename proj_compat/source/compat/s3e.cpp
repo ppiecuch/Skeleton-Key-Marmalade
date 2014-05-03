@@ -2,7 +2,7 @@
 #include "IwGx.h"
 #include "Iw2D.h"
 #include "IwResManager.h"
-#include <SDL/SDL_opengl.h>
+#include <SDL_opengl.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -88,6 +88,7 @@ static uint32 _GetDevWidth() {
   return 1280;
   #elif defined __PLAYBOOK__
   return 600;
+  #elif defined __ANDROID__ || defined ANDROID
   #else
   #error Cannot determine device.
   #endif
@@ -1428,7 +1429,7 @@ bool SCL_RequestLeadersboard(const unsigned int aMode, SCL_Callback callback) {
     return SC_OK;
 }
 
-int SCL_GetLeaderboardLiveRequests() {
+int SCL_GetLeadersboardLiveRequests() {
     return live_requests;
 }
 

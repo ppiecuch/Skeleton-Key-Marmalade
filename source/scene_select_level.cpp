@@ -76,8 +76,8 @@ void SelectLevelLabelNumber::updateOpacity() {
 }
 
 // scene select level
-SceneSelectLevel::SceneSelectLevel() {
-	IGScene::IGScene();
+SceneSelectLevel::SceneSelectLevel() : IGScene()
+{
 	IGLog("SceneSelectLevel init");
 
 	// load the resources

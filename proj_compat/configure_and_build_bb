@@ -8,6 +8,18 @@ TARGET=""
 VERBOSE=""
 MESSAGE=""
 SIGNING_PASSWORD=""
+TOOLCHAIN_FILE="`pwd`/toolchain/qnx.toolchain.cmake"
+if [ -f CMakeCache.txt ]; then
+    if grep --quiet "$TOOLCHAIN_FILE" CMakeCache.txt; then
+	# same toolchain
+	echo "** Continue using $TOOLCHAIN_FILE"
+    else
+	# diffrent toolchain - reload
+	echo "** Toolchain not found - force to reconfigure build."
+	PLAT=`grep PLAT_SDK CMakeCache.txt | cut -f 2 -d=`
+	rm -rf cmake.ts CMakeCache.txt CMakeFiles
+    fi
+fi
 
 # Check and rebuild arguments
 options=()  # the buffer array for the parameters
@@ -19,20 +31,24 @@ do
 	    ;;
 	playbook*)
 	    PLAT="/Developer/SDKs/bbndk-2.1.0/bbndk-env.sh"
-	    if grep --quiet "$PLAT" CMakeCache.txt; then
-		echo "** Config unchanged."
-	    else
-		echo "** Force to reconfigure build."
-		rm -rf cmake.ts CMakeCache.txt CMakeFiles
+	    if [ -f CMakeCache.txt ]; then
+		if grep --quiet "$PLAT" CMakeCache.txt; then
+		    echo "** Config unchanged."
+		else
+		    echo "** Force to reconfigure build."
+		    rm -rf cmake.ts CMakeCache.txt CMakeFiles
+		fi
 	    fi
 	    ;;
 	bb10*)
 	    PLAT="/Developer/SDKs/bbndk/bbndk-env.sh"
-	    if grep --quiet "$PLAT" CMakeCache.txt; then
-		echo "** Config unchanged."
-	    else
-		echo "** Force to reconfigure build."
-		rm -rf cmake.ts CMakeCache.txt CMakeFiles
+	    if [ -f CMakeCache.txt ]; then
+		if grep --quiet "$PLAT" CMakeCache.txt; then
+		    echo "** Config unchanged."
+		else
+		    echo "** Force to reconfigure build."
+		    rm -rf cmake.ts CMakeCache.txt CMakeFiles
+		fi
 	    fi
 	    ;;
 	run*)
@@ -74,6 +90,7 @@ do
     esac
     shift
 done
+
 # Reload arguments with remaing ones:
 set -- "${options[@]}"
 
@@ -205,7 +222,7 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
     -DQNX_HOST="$QNX_HOST" \
     -DSTAGE_DIR="$STAGE_DIR" \
     -DQCC_VERSION_CHECK="`pwd`/toolchain/check_qcc_version" \
-    -DCMAKE_TOOLCHAIN_FILE="`pwd`/toolchain/qnx.toolchain.cmake" \
+    -DCMAKE_TOOLCHAIN_FILE="$TOOLCHAIN_FILE" \
     -DCMAKE_SYSTEM_PROCESSOR="$CPUDIR" \
     -DCMAKE_EXTRA_OPTIONS="$CMAKE_EXTRA_OPTIONS" \
     -DCMAKE_BUILD_TYPE="$BUILDTYPE" \
@@ -220,7 +237,7 @@ if [ ! -f cmake.ts -o  ! -f CMakeCache.txt -o CMakeLists.txt -nt cmake.ts -o $sc
     $3 ./ \
 && touch cmake.ts \
 && make $VERBOSE $TARGET \
-&& END=$(date +%s); DIFF=$(echo "$END - $START" | bc); $terminalnotifier -message "$script script finished$MESSAGE Execution time: $DIFF sec." -title BUILDER >> /dev/null
+&& (END=$(date +%s); DIFF=$(echo "$END - $START" | bc); $terminalnotifier -message "$script script finished$MESSAGE Execution time: $DIFF sec." -title BUILDER >> /dev/null)
 else
     END=$(date +%s)
     DIFF=$(echo "$END - $START" | bc)

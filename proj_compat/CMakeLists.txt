@@ -18,6 +18,7 @@ if(COMMAND CMAKE_POLICY)
 endif(COMMAND CMAKE_POLICY)
 
 project(SkeletonKey)
+set(NAME SkeletonKey)
 
 set(SK_DIST_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
 set(SK_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build_output)
@@ -70,7 +71,7 @@ MACRO(Git_IS_WORKTREE var)
     EXECUTE_PROCESS( COMMAND ${GIT_EXECUTABLE} rev-parse --is-inside-work-tree 
     OUTPUT_VARIABLE _IS_GIT
     OUTPUT_STRIP_TRAILING_WHITESPACE )
-    IF(${_IS_GIT} STREQUAL "true")
+    IF("${_IS_GIT}" STREQUAL "true")
     	      SET(${var} TRUE)
     ENDIF()
 ENDMACRO(Git_IS_WORKTREE)
@@ -94,7 +95,8 @@ ENDIF( IS_GIT )
 
 #Wav converting
 FIND_PROGRAM(AFC_EXECUTABLE afconvert
-  HINTS /opt/local/bin /sw/bin
+  HINTS /usr/bin /opt/local/bin /sw/bin
+  NO_CMAKE_FIND_ROOT_PATH
   DOC "afconvert command line sound converter")
 IF(AFC_EXECUTABLE)
 	SET(WAV_CONVERT ${AFC_EXECUTABLE} -f WAVE -d LEI16@11025 -c 1)
@@ -170,29 +172,162 @@ elseif (APPLE)
 endif ()
 
  if (NC_BUILD_PLATFORM_IOS)
-   set_xcode_property (hello-lib GCC_GENERATE_DEBUGGING_SYMBOLS YES)
+   set_xcode_property (SkeletonKey GCC_GENERATE_DEBUGGING_SYMBOLS YES)
 endif ()
 
-if(SDLDIR)
+if (ANDROID)
+	set (NC_BUILD_PLATFORM_ANDROID 1)
+endif ()
+if (IOS)
+	set (NC_BUILD_PLATFORM_IOS 1)
+endif ()
+
+ if(SDLDIR)
 	set(ENV{SDLDIR} ${SDLDIR})
  endif()
 
-# Find SDL library
-include(FindSDL)
-
-if(NOT SDL_FOUND AND NOT SDLDIR)
-       message( FATAL_ERROR "** Required SDL library not found!\n*** Specify SDLDIR for library root directory." )
+if(NOT ANDROID_NDK)
+	set( ANDROID_NDK  $ENV{ANDROID_NDK} )
 endif()
 
-if(NOT SDL_FOUND)
-       set( SDL_CONFIG ${SDLDIR}/bin/sdl-config )
-       if(EXISTS ${SDLDIR}/${REQ_PLATF_VER}/bin/sdl-config)
+if (NC_BUILD_PLATFORM_ANDROID)
+
+	add_definitions( -DSDL_VIDEO_OPENGL_GLES_BC )
+
+	# Add GLES2_BC library for this project
+	if( EXISTS ${GLES2BCDIR}/src )	
+		if( EXISTS ${GLES2BCDIR}/cmake )
+		    include( "${GLES2BCDIR}/cmake/GLES2_bc-build.cmake" REQUIRED )
+		else()
+			message( FATAL_ERROR 
+	       		"** Required android-cmake/GLES2_bc-build.cmake not found!\n** Specify GLES2BCDIR for correct library root directory." )
+		endif()
+	else()
+       	       message( FATAL_ERROR "** Required GLES2_bc source library not found!\n** Specify GLES2BCDIR for library root directory." )
+	endif()
+
+	# Add OpenAL library for this project
+	if( EXISTS ${OPENALDIR} )	
+		if( EXISTS ${OPENALDIR}/CMakeLists.txt )
+		    add_subdirectory( ${OPENALDIR} REQUIRED )
+		else()
+			message( FATAL_ERROR 
+	       		"** Required Android OpenAL implementation not found!\n** Specify OPENALDIR for correct library root directory." )
+		endif()
+	else()
+       	       message( FATAL_ERROR "** Required OpenAL source library not found!\n** Specify OPENALDIR for library root directory." )
+	endif()
+
+	# Build SDL library for this project
+	if( EXISTS ${SDLDIR}/src )	
+		if( EXISTS ${SDLDIR}/android-cmake )
+		    include( "${SDLDIR}/android-cmake/SDL_src.cmake" REQUIRED )
+		else()
+			message( FATAL_ERROR 
+	       		"** Required android-cmake/SDL_src.cmake not found!\n** Specify SDLDIR for correct library root directory." )
+		endif()
+	else()
+       	       message( FATAL_ERROR "** Required SDL source library not found!\n** Specify SDLDIR for library root directory." )
+	endif()
+
+	set(SDL_INCLUDE_DIR ${SDLDIR}/include)
+
+	include("${SDLDIR}/android-cmake/Apk.cmake" REQUIRED)
+ 
+	set( SOURCE_SQLITE_ROOT ${PROJECT_SOURCE_DIR}/../source/sqlite3 )
+
+	include_directories(
+		${ANDROID_NDK}/sources/android/native_app_glue
+		${SOURCE_SQLITE_ROOT}
+		${GLES2BC_INC}
+		${OPENALDIR}/include
+		${SDLDIR}/include/SDL
+	) 
+
+	set(SkeletonKey_Src_PlatfFiles
+		${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c
+    		${SOURCE_SQLITE_ROOT}/sqlite3.h
+    		${SOURCE_SQLITE_ROOT}/sqlite3ext.h
+    		${SOURCE_SQLITE_ROOT}/sqlite3.c
+		${GLES2BC_SRCS}
+    		${SDL_SRCS}
+	)
+ 
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -ffor-scope -fno-rtti -fno-exceptions -pipe -ffunction-sections -fdata-sections -ffast-math -Wnon-virtual-dtor -Wreorder -Wsign-promo -fvisibility=hidden -fvisibility-inlines-hidden -Wstrict-null-sentinel -Os -funroll-all-loops -fpeel-loops -ftree-vectorize")
+	set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,--as-needed -Wl,--gc-sections -Wl,--no-undefined -Wl,--strip-all -Wl,-rpath-link=${ANDROID_NDK_SYSROOT}/usr/lib/ -L${ANDROID_NDK_SYSROOT}/usr/lib/")
+ 
+elseif(NC_BUILD_PLATFORM_IOS)
+
+	add_definitions( -DSDL_VIDEO_OPENGL_GLES_BC )
+
+	# Build SDL library for this project
+	if( NOT EXISTS ${SDLDIR} )
+       	       message( FATAL_ERROR "** Required SDL installation library not found!\n** Specify SDLDIR for library root directory." )
+	endif()
+
+	# Select proper library path for iOS
+	if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+	   set(SDLPATH1 "Debug")
+	else()
+	   set(SDLPATH1 "Release")
+	endif()
+	if (${IOS_PLATFORM} STREQUAL "OS")
+	   set(SDLPATH2 "iphoneos")
+	else()
+	   set(SDLPATH2 "iphonesimulator")
+	endif()
+
+       	set(SDL_INCLUDE_DIR ${SDLDIR}/include/SDL)
+       	set(SDL_LIB_DIR ${SDLDIR}/${SDLPATH1}/${SDLPATH2})
+       	set(SDL_LIBRARY SDL)
+
+	# look for Vorbis/Ogg framework
+	find_library(VorbisFramework 
+	  NAMES Vorbis 
+	  PATHS ${VORBISDIR}
+	  CMAKE_FIND_ROOT_PATH_BOTH
+	  )
+	if(NOT VorbisFramework)
+	  message(FATAL_ERROR "** Vorbis framework not found at ${VORBISDIR}")
+	  # we can find for library if no framework found
+	endif()
+
+	set(IOS_FRAMEWORKS
+	  ${VorbisFramework}
+	  Foundation
+    	  AudioToolbox
+   	  CoreGraphics
+    	  QuartzCore
+    	  UIKit
+    	  OpenGLES2)
+
+	set(IOS_ARCHITECTURES "armv7 armv7s")
+	foreach(FW ${IOS_FRAMEWORKS})
+   	      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework ${FW}")
+	endforeach()
+	include_directories(
+	  ${VorbisFramework}/Headers)
+   
+	set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.komsoft.\${PRODUCT_NAME:identifier}")
+
+else(NC_BUILD_PLATFORM_IOS)
+
+	# Find SDL library
+	include(FindSDL)
+
+	if(NOT SDL_FOUND AND NOT SDLDIR)
+       	       message( FATAL_ERROR "** Required SDL library not found!\n** Specify SDLDIR for library root directory." )
+	endif()
+
+	if(NOT SDL_FOUND)
+       	       set( SDL_CONFIG ${SDLDIR}/bin/sdl-config )
+       	       if(EXISTS ${SDLDIR}/${REQ_PLATF_VER}/bin/sdl-config)
        		 # SDL exists in the subdirectory
        		 set( SDL_CONFIG 
 		        ${SDLDIR}/${REQ_PLATF_VER}/bin/sdl-config )
 		 set( SDLDIR ${SDLDIR}/${REQ_PLATF_VER} )
-       endif()
-       if( EXISTS ${SDL_CONFIG} )
+	       endif()
+       	       if( EXISTS ${SDL_CONFIG} )
        		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --version
 			OUTPUT_VARIABLE SDL_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
        		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --cflags
@@ -200,14 +335,15 @@ if(NOT SDL_FOUND)
        		 EXECUTE_PROCESS(COMMAND ${SDL_CONFIG} --libs 
        	      	 	OUTPUT_VARIABLE SDL_LDFLAGS OUTPUT_STRIP_TRAILING_WHITESPACE)
 		 message( "** Manual configuration for SDL library found: ${SDL_VERSION}." )
-       else()
+       		else()
 		 message( "** Configuration for SDL library not found. Forcing ${SDLDIR} for root directory." )
-       endif()
+       		endif()
 
-       set(SDL_INCLUDE_DIR ${SDLDIR}/include)
-       set(SDL_LIB_DIR ${SDLDIR}/lib)
-       set(SDL_LIBRARY SDL)
- endif()
+       		set(SDL_INCLUDE_DIR ${SDLDIR}/include/SDL)
+       		set(SDL_LIB_DIR ${SDLDIR}/lib)
+       		set(SDL_LIBRARY SDL)
+	endif()
+endif()
 
 include(CMakeDependentOption)
 include(CheckCXXCompilerFlag)
@@ -228,6 +364,8 @@ set( SkeletonKey_Src_Files
 	## (source)
 	${SOURCE_ROOT}/main.cpp
 	${SOURCE_ROOT}/config.h
+	${SOURCE_ROOT}/debug_ui.cpp
+	${SOURCE_ROOT}/debug_ui.h
 	${SOURCE_ROOT}/scene_menu.h
 	${SOURCE_ROOT}/scene_menu.cpp
 	${SOURCE_ROOT}/scene_map.h
@@ -377,24 +515,22 @@ if (NC_BUILD_PLATFORM_QNX)
 		curl crypto mmrndclient icuuc icui18n strm)
 endif (NC_BUILD_PLATFORM_QNX)
 
-if (NC_BUILD_PLATFORM_IOS)
-   set(IOS_FRAMEWORKS
-	Foundation
-    	AudioToolbox
-   	CoreGraphics
-    	QuartzCore
-    	UIKit
-    	OpenGLES2 )
-
-   set(CMAKE_OSX_SYSROOT iphonesimulator4.0)
-   set(CMAKE_OSX_ARCHITECTURES "$(ARCHS_STANDARD_32_BIT)")
-   foreach(FW ${IOS_FRAMEWORKS})
-   	      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -framework ${FW}")
-   endforeach()
-   
-   set(MACOSX_BUNDLE_GUI_IDENTIFIER "com.komsoft.\${PRODUCT_NAME:identifier}")
-
-endif (NC_BUILD_PLATFORM_IOS)
+FIND_FILE( TURS2 "turs2.cmake" PATHS 
+	   ~/Private/Projekty/_commonRuntime/turs2/
+	   ~/Private/Projekty/_commonRuntime/turs2/build/
+	   ENV INCLUDE
+	   NO_CMAKE_FIND_ROOT_PATH )
+if (TURS2)
+   message("*** Adding debug UI at ${TURS2}")
+   add_definitions( -DDEBUG_UI -DCUSTOM_OPENGL_HDR=<SDL/SDL_opengl.h>)
+   include(${TURS2})
+   set( SkeletonKey_Src_Files
+     ${SkeletonKey_Src_Files}
+     ${TURS2_SRC_ALL} )
+   SET_SOURCE_FILES_PROPERTIES(
+	${TURS2_RES_ALL}
+	PROPERTIES TARGET_PATH "./data" )
+endif(TURS2)
 
 set( THIRD_PARTY ./third_party/ )
 
@@ -407,6 +543,7 @@ include_directories(
 	${LOCAL_SOURCE_ROOT}
 	${SOURCE_ROOT}
 	${DATA_ROOT}
+	${TURS2_INC_DIR}
 )
 link_directories(
 	${SDL_LIB_DIR}
@@ -744,6 +881,7 @@ if (NC_BUILD_PLATFORM_QNX)
    LIST( APPEND BB10_FILES ${SkeletonKey_Data_Files} )
    LIST( APPEND BB10_FILES ${SkeletonKey_DataGfx_Files} )
    LIST( APPEND BB10_FILES ${Sdl_Fonts_Files} )
+   LIST( APPEND BB10_FILES ${TURS2_RES_ALL} )
    FOREACH(file ${BB10_FILES})
 	GET_FILENAME_COMPONENT(filename ${file} NAME)
 	GET_FILENAME_COMPONENT(ext ${file} EXT)
@@ -805,7 +943,7 @@ if (NC_BUILD_PLATFORM_QNX)
 # Building executable:
 add_definitions("-DROCKET_WITH_FREETYPE")
 
-if (NC_BUILD_PLATFORM_QNX)
+if (NC_BUILD_PLATFORM_QNX OR NC_BUILD_PLATFORM_ANDROID)
     	add_executable( SkeletonKey
 			${SkeletonKey_Src_Files}
 			${SkeletonKey_Src_PlatfFiles}
@@ -823,14 +961,21 @@ elseif(APPLE)
     			${SkeletonKey_Src_PlatfFiles}
 			${SkeletonKey_Hdr_Files}
 			${libRocket_Src_Files} )
-endif(NC_BUILD_PLATFORM_QNX)
+endif(NC_BUILD_PLATFORM_QNX OR NC_BUILD_PLATFORM_ANDROID)
     
 target_link_libraries( SkeletonKey ${SDL_LIBRARY} ${PLATF_LIBS})
 
 # Target properties:
 
-if (APPLE)
-       	set_target_properties(SkeletonKey PROPERTIES OSX_ARCHITECTURES "i386;" )
+if (NC_BUILD_PLATFORM_IOS)
+       	set_target_properties(${NAME}
+		PROPERTIES OSX_ARCHITECTURES
+       		"${IOS_ARCHITECTURES}")
+	# code signing
+   	set_target_properties(${NAME} PROPERTIES
+   		XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer")
+elseif (APPLE)
+       	set_target_properties(${NAME} PROPERTIES OSX_ARCHITECTURES "i386;" )
 endif()
 
 # Optional packaging:

@@ -131,8 +131,8 @@ void MenuButtonOtherGames::buttonReleased() {
 }
 
 // scene menu
-SceneMenu::SceneMenu() {
-	IGScene::IGScene();
+SceneMenu::SceneMenu() : IGScene() 
+{
 	IGLog("SceneMenu init");
 
 	// load the resources

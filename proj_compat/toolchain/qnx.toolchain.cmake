@@ -17,13 +17,15 @@ endif()
 get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
 if( _CMAKE_IN_TRY_COMPILE )
  include( "${CMAKE_CURRENT_SOURCE_DIR}/qnx.toolchain.config.cmake" OPTIONAL )
+ #subsequent toolchain loading is not really needed and failing builing
+ return()
 endif()
 
 if( "$ENV{QNX_HOST}" AND NOT "${QNX_HOST}" )
-    set( ${QNX_HOST} $ENV{QNX_HOST} )
+    set( ${QNX_HOST} ENV{QNX_HOST} )
 endif()
 if( "$ENV{QNX_TARGET}" AND NOT "${QNX_TARGET}" )
-    set( ${QNX_TARGET} $ENV{QNX_TARGET} )
+    set( ${QNX_TARGET} ENV{QNX_TARGET} )
 endif()
 
 if( ".${QNX_TARGET}" STREQUAL "." AND ".${QNX_HOST}" STREQUAL ".")
@@ -74,6 +76,9 @@ SET( COMP_PATHS "-Wl,-rpath-link,${STAGE_LIB} -Wl,-rpath-link,${STAGE_USR_LIB} -
 # Flags and preprocessor definitions
 set( BLACKBERRY_CC_FLAGS  " -Vgcc_nto${CPU} -D__QNX__ -D__QNXNTO__ ${COMP_PATHS} ${PROFILER_FLAGS}" )
 set( BLACKBERRY_CXX_FLAGS " -Vgcc_nto${CPU} -Y_cpp -D__QNX__ -D__QNXNTO__ ${COMP_PATHS} ${PROFILER_FLAGS}" )
+
+SET( ENV{QNX_HOST} ${QNX_HOST} )
+SET( ENV{QNX_TARGET} ${QNX_TARGET} )
 
 # NDK flags
 set( CMAKE_CXX_FLAGS "${BLACKBERRY_CXX_FLAGS}" )
@@ -134,8 +139,8 @@ set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
 set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
 
 # update cache
-SET( QNX_HOST "${QNX_HOST}" CACHE INTERNAL "QNX host" )
-SET( QNX_TARGET "${QNX_TARGET}" CACHE INTERNAL "QNX target" )
+SET( QNX_HOST "${QNX_HOST}" CACHE INTERNAL "QNX host" FORCE)
+SET( QNX_TARGET "${QNX_TARGET}" CACHE INTERNAL "QNX target" FORCE)
 SET( QCC_VERSION_CHECK "${QCC_VERSION_CHECK}" CACHE INTERNAL "qcc version checker" )
 SET( QNX_COMPILER_VERSION "${QNX_COMPILER_VERSION}" CACHE INTERNAL "compiler version from selected toolchain" )
 

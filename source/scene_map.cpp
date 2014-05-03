@@ -42,8 +42,8 @@ MapLock::MapLock(float x, float y) {
 }
 
 // map menu
-SceneMap::SceneMap() {
-	IGScene::IGScene();
+SceneMap::SceneMap() : IGScene()
+{
 	IGLog("SceneMap init");
 	float x, y;
 

@@ -56,8 +56,8 @@ void NagButtonNo::buttonReleased() {
 }
 
 // scene nag
-SceneNag::SceneNag() {
-	IGScene::IGScene();
+SceneNag::SceneNag() : IGScene()
+{
 	IGLog("SceneNag init");
 
 	// load the resources

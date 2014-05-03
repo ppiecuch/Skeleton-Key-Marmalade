@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
-#include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
-#include <SDL/SDL_events.h>
-#include <SDL/SDL_timer.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
+#include <SDL_events.h>
+#include <SDL_timer.h>
 
 #ifndef MIN
     #define MIN(a,b) (((a)<(b))?(a):(b))
@@ -130,7 +130,7 @@ double SCL_GetLeadersboardResultAt(const SCL_ScoreList score_list, int pos);
 int SCL_GetLeadersboardCount(const SCL_ScoreList score_list);
 SCL_ScoreList SCL_GetLeadersboard(const unsigned int aMode);
 SCL_Status SCL_GetLeadersboardStatus(const unsigned int aMode);
-int SCL_GetLeaderboardLiveRequests();
+int SCL_GetLeadersboardLiveRequests();
 bool SCL_RequestLeadersboard(const unsigned int aMode, SCL_Callback callback);
 bool SCL_SubmitScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel);
 bool SCL_ReportScore(const double aResult, const unsigned int aMode, const double aMinorResult, const unsigned int aLevel);

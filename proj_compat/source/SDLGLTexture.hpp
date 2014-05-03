@@ -9,8 +9,8 @@
 #ifndef __SDLGLTEXTURE_HPP__
 #define __SDLGLTEXTURE_HPP__
 
-#include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
+#include <SDL.h>
+#include <SDL_opengl.h>
 #include <string>
 
 void SDLGL_FreeTexture( long &texID );

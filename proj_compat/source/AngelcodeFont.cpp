@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <SDL/SDL_opengl.h>
+#include <SDL_opengl.h>
 #include "toolkit.h"
 
 static int readbyte(FILE * f)
