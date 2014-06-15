@@ -1,0 +1,7 @@
+#!/bin/bash
+
+. ENVS3E
+
+echo "*** building using $S3E ..."
+$S3E/s3e/bin/mkb --rebuild --no-ide $*
+echo "*** done."

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<qnx xmlns="http://www.qnx.com/schemas/application/1.0">
+    <id>com.komsoft.skeletonkey</id>
+    <filename>SkeletonKey</filename>
+    <name>SkeletonKey</name>
+    <author>KomSoft Oprogramowanie</author>
+    <authorId>gYAAgJWWmDfer27CLcxm_P3mzK0</authorId>
+    <versionNumber>1.0.1</versionNumber>
+    <versionLabel>1.0.1</versionLabel>
+    <platformVersion>3.0.0.0</platformVersion>
+	<buildId>0</buildId>
+    <initialWindow>
+        <systemChrome>none</systemChrome>
+        <transparent>false</transparent>
+        <autoOrients>true</autoOrients>
+    </initialWindow>
+    <publisher>KomSoft</publisher>
+    <action system="true">run_native</action>
+    <action>access_shared</action>
+    <category>core.games</category>
+    <icon>
+        <image>icon.png</image>
+    </icon>
+</qnx>

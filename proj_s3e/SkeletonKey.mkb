@@ -11,7 +11,7 @@ options
 
 files
 {
-	(source)
+	(../source)
 	main.cpp
 	config.h
 	scene_menu.h
@@ -42,7 +42,7 @@ files
 	game_data.cpp
 	achievements.h
 	achievements.cpp
-	(source/ig2d)
+	(../source/ig2d)
 	ig.h
 	ig_animation.h
 	ig_animation.cpp
@@ -66,7 +66,7 @@ files
 	ig_sprite.cpp
 	ig_touches.h
 	ig_touches.cpp
-	(source/sqlite3)
+	(../source/sqlite3)
     	[SQLite3]
     	sqlite3.h
     	sqlite3ext.h

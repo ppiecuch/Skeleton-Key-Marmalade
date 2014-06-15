@@ -1,0 +1,8 @@
+#!/bin/bash
+
+MRM=7.3
+if [ -e /Applications/Marmalade.app ]; then
+    S3E=/Applications/Marmalade.app/Contents
+else
+    S3E=/Developer/Marmalade/$MRM
+fi

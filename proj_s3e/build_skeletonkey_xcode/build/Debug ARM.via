@@ -1,0 +1,15 @@
+--dll="/Volumes/MacHDD/Users/pawelp/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/build_skeletonkey_xcode/build/Debug ARM/SkeletonKey.s3e"
+--data="/Volumes/MacHDD/Users/pawelp/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/data"
+--app-icf1="/Volumes/MacHDD/Users/pawelp/Private/Projekty/_OPEN_SOURCE_PROJECTS/Skeleton-Key-Marmalade/data/app.icf"
+--config-txt1="/Developer/Marmalade/6.4/modules/derbh/docs/derbh.config.txt"
+--config-txt2="/Developer/Marmalade/6.4/modules/iwgeom/docs/iwgeom.config.txt"
+--config-txt3="/Developer/Marmalade/6.4/modules/iwgl/docs/iwgl.config.txt"
+--config-txt4="/Developer/Marmalade/6.4/modules/iwutil/docs/iwutil.config.txt"
+--config-txt5="/Developer/Marmalade/6.4/modules/legacy/iw2d/docs/iw2d.config.txt"
+--config-txt6="/Developer/Marmalade/6.4/modules/legacy/iwgx/docs/iwgx.config.txt"
+--config-txt7="/Developer/Marmalade/6.4/modules/legacy/iwgxfont/docs/iwgxfont.config.txt"
+--config-txt8="/Developer/Marmalade/6.4/modules/legacy/iwresmanager/docs/iwresmanager.config.txt"
+--config-txt9="/Developer/Marmalade/6.4/s3e/s3e.config.txt"
+--config-txt10="/Developer/Marmalade/6.4/s3e/s3e.config.txt"
+--s3e:app_version=1.0.1
+--s3e-dir=/Developer/Marmalade/6.4/s3e
